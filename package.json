@@ -1,36 +1,19 @@
 {
   "name": "snapquote",
+  "version": "1.0.0",
+  "description": "AI-powered instant quote generation via WhatsApp - FREE Vercel + Supabase stack",
   "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "tsc --noEmit && echo 'Build completed'",
+    "build": "echo 'Build completed - Vercel handles deployment'",
     "start": "node api/index.js",
-    "deploy": "vercel --prod",
-    "preview": "vercel",
-    "test": "curl http://localhost:3000/api/health",
-    "type-check": "tsc --noEmit"
+    "dev": "node api/index.js"
   },
   "dependencies": {
-    "@hono/zod-validator": "^0.4.0",
-    "@neondatabase/serverless": "^1.0.1",
-    "@supabase/supabase-js": "^2.56.0",
-    "@types/pg": "^8.15.5",
-    "@vercel/node": "^5.3.13",
-    "date-fns": "^3.6.0",
-    "drizzle-kit": "^0.31.4",
-    "drizzle-orm": "^0.44.4",
-    "hono": "^4.9.4",
-    "openai": "^4.73.0",
-    "pg": "^8.16.3",
-    "stripe": "^17.5.0",
-    "twilio": "^5.4.0",
-    "uuid": "^10.0.0",
-    "zod": "^3.23.0"
+    "@supabase/supabase-js": "^2.39.0",
+    "openai": "^4.28.0",
+    "stripe": "^14.15.0"
   },
-  "devDependencies": {
-    "@types/node": "^20.19.11",
-    "supabase": "^1.200.0",
-    "typescript": "^5.0.0",
-    "vite": "^6.3.5"
+  "engines": {
+    "node": "18.x"
   }
 }
