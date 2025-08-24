@@ -10,13 +10,41 @@ if (supabaseUrl && supabaseKey) {
 }
 
 export default async function handler(req, res) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Helper function to handle both Node.js and Vercel response objects
+  const sendResponse = (statusCode, data, contentType = 'application/json') => {
+    // Vercel-style response
+    if (typeof res.status === 'function') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      
+      if (contentType === 'text/html') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(statusCode).send(data);
+      }
+      return res.status(statusCode).json(data);
+    }
+    // Node.js-style response
+    else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.statusCode = statusCode;
+      
+      if (contentType === 'text/html') {
+        res.setHeader('Content-Type', 'text/html');
+        res.end(data);
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(typeof data === 'string' ? data : JSON.stringify(data));
+      }
+    }
+  };
+
+  // Set CORS headers (already handled in sendResponse)
 
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return sendResponse(200, '');
   }
 
   const url = new URL(req.url, `http://${req.headers.host}`);
@@ -26,7 +54,7 @@ export default async function handler(req, res) {
     // Health check endpoint
     if (path === '/api/health') {
       const dbStatus = supabase ? 'connected' : 'not configured';
-      return res.status(200).json({
+      return sendResponse(200, {
         status: 'healthy',
         message: 'SnapQuote API is running!',
         database: dbStatus,
@@ -42,7 +70,7 @@ export default async function handler(req, res) {
         .select('count(*)')
         .limit(1);
       
-      return res.status(200).json({
+      return sendResponse(200, {
         message: 'Database connection test',
         success: !error,
         error: error?.message || null,
@@ -53,7 +81,7 @@ export default async function handler(req, res) {
     // Quote generation endpoint (placeholder)
     if (path === '/api/generate-quote' && req.method === 'POST') {
       // This will be expanded with OpenAI integration
-      return res.status(200).json({
+      return sendResponse(200, {
         message: 'Quote generation endpoint',
         status: 'under development',
         timestamp: new Date().toISOString()
@@ -62,7 +90,7 @@ export default async function handler(req, res) {
 
     // WhatsApp webhook endpoint (placeholder)
     if (path === '/api/webhook/whatsapp' && req.method === 'POST') {
-      return res.status(200).json({
+      return sendResponse(200, {
         message: 'WhatsApp webhook received',
         status: 'processed',
         timestamp: new Date().toISOString()
@@ -77,7 +105,7 @@ export default async function handler(req, res) {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      return res.status(200).json({
+      return sendResponse(200, {
         message: 'Analytics data',
         data: data || [],
         error: error?.message || null,
@@ -220,12 +248,11 @@ export default async function handler(req, res) {
 </body>
 </html>`;
       
-      res.setHeader('Content-Type', 'text/html');
-      return res.status(200).send(html);
+      return sendResponse(200, html, 'text/html');
     }
 
     // 404 for unknown routes
-    return res.status(404).json({
+    return sendResponse(404, {
       error: 'Not Found',
       message: `Route ${path} not found`,
       availableRoutes: [
@@ -240,7 +267,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('API Error:', error);
-    return res.status(500).json({
+    return sendResponse(500, {
       error: 'Internal Server Error',
       message: error.message,
       timestamp: new Date().toISOString()

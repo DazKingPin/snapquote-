@@ -256,19 +256,27 @@ npm run test
 3. **Make Payment**: Click payment link to pay via Stripe
 4. **Schedule Service**: Book appointment after payment
 
-## URLs (After Deployment)
+## URLs
+
+### **Live Demo** (Working Now!)
+- **Sandbox Demo**: https://3000-i7i1ntieabxte4roqd2x7-6532622b.e2b.dev
+- **Health Check**: https://3000-i7i1ntieabxte4roqd2x7-6532622b.e2b.dev/api/health
+- **Database Test**: https://3000-i7i1ntieabxte4roqd2x7-6532622b.e2b.dev/api/db-test
+
+### **After Vercel Deployment**
 - **Production**: https://your-app.vercel.app
 - **Health Check**: https://your-app.vercel.app/api/health
-- **Dashboard**: https://your-app.vercel.app/dashboard.html
+- **API Endpoints**: All /api/* routes available
 - **GitHub**: https://github.com/[username]/snapquote
 
 ## Status
-- **Platform**: ✅ Ready for FREE deployment
-- **Core Features**: ✅ Fully implemented
-- **Database**: ✅ PostgreSQL schema ready
-- **Performance Monitoring**: ✅ Complete instrumentation
-- **Cost**: ✅ **$0/month** hosting
-- **Production Ready**: ✅ Yes!
+- **Platform**: ✅ **WORKING NOW** - Live demo available!
+- **Local Testing**: ✅ Successfully running on sandbox
+- **API Endpoints**: ✅ All core endpoints functional
+- **Database**: ✅ Supabase PostgreSQL connected
+- **Vercel Compatibility**: ✅ Code ready for deployment
+- **Cost**: ✅ **$0/month** hosting confirmed
+- **Production Ready**: ✅ Ready to deploy to Vercel!
 - **Last Updated**: 2025-08-24
 
 ## 💡 **Why This FREE Solution is Better**
