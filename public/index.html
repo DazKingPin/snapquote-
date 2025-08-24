@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapQuote - AI-Powered Instant Quotes via WhatsApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-camera text-3xl text-blue-600 mr-3"></i>
+                        <h1 class="text-2xl font-bold text-gray-900">SnapQuote</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a href="/dashboard" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="System Online"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <div class="flex items-center justify-center px-4 py-16">
+            <div class="max-w-4xl mx-auto text-center">
+                <div class="mb-8">
+                    <h1 class="text-5xl font-bold text-gray-900 mb-4">
+                        AI-Powered Instant Quotes
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-2">
+                        Transform Your Service Business with WhatsApp Integration
+                    </p>
+                    <p class="text-sm text-green-600 font-medium">
+                        ✅ FREE Platform • No Cloudflare Costs • Vercel + Supabase Powered
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+                        How It Works
+                    </h2>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 mb-8">
+                        <div class="text-center">
+                            <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-mobile-alt text-blue-600 text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold mb-2">📱 WhatsApp Photo</h3>
+                            <p class="text-sm text-gray-600">Customer sends a photo via WhatsApp</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-brain text-purple-600 text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold mb-2">🤖 AI Analysis</h3>
+                            <p class="text-sm text-gray-600">AI analyzes image in under 12 seconds</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-dollar-sign text-green-600 text-2xl"></i>
+                            </div>
+                            <h3 class="font-semibold mb-2">💰 Instant Quote</h3>
+                            <p class="text-sm text-gray-600">Quote + payment link delivered instantly</p>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-semibold mb-4">🎯 Performance Targets</h3>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-600">&lt;15s</div>
+                                <div class="text-xs text-gray-600">Total Response</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-purple-600">99.5%</div>
+                                <div class="text-xs text-gray-600">Uptime SLO</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600">&gt;95%</div>
+                                <div class="text-xs text-gray-600">Payment Success</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-yellow-600">0.75+</div>
+                                <div class="text-xs text-gray-600">AI Confidence</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="checkSystemHealth()" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                            <i class="fas fa-heartbeat mr-2"></i>
+                            Check System Health
+                        </button>
+                        <a href="/dashboard" class="bg-gray-200 text-gray-800 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition inline-block">
+                            <i class="fas fa-chart-line mr-2"></i>
+                            View Analytics
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-rocket text-blue-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibold mb-2">Lightning Fast</h3>
+                        <p class="text-sm text-gray-600">Complete quote generation in under 15 seconds from photo to payment link</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-globe text-green-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibold mb-2">Free Hosting</h3>
+                        <p class="text-sm text-gray-600">Powered by Vercel's free tier with global edge network performance</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-database text-purple-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibent mb-2">Free Database</h3>
+                        <p class="text-sm text-gray-600">Supabase PostgreSQL with 500MB storage and 2GB bandwidth</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-chart-bar text-yellow-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibold mb-2">Real-time Analytics</h3>
+                        <p class="text-sm text-gray-600">Complete performance monitoring and conversion tracking</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-shield-alt text-red-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibold mb-2">Enterprise Security</h3>
+                        <p class="text-sm text-gray-600">Row-level security, encrypted storage, and audit logging</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <i class="fas fa-cogs text-gray-500 text-2xl mb-3"></i>
+                        <h3 class="font-semibold mb-2">No Maintenance</h3>
+                        <p class="text-sm text-gray-600">Serverless architecture with automatic scaling and updates</p>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">🔍 System Status</h3>
+                    <div id="healthStatus" class="text-gray-600">
+                        Click "Check System Health" to verify all services
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t">
+            <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                <div class="text-center text-gray-600">
+                    <p class="mb-2">SnapQuote - Built with ❤️ for service businesses</p>
+                    <p class="text-sm">
+                        Powered by: 
+                        <span class="font-medium">Vercel</span> • 
+                        <span class="font-medium">Supabase</span> • 
+                        <span class="font-medium">Hono</span> • 
+                        <span class="font-medium">OpenAI</span> • 
+                        <span class="font-medium">Stripe</span>
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        async function checkSystemHealth() {
+            const statusDiv = document.getElementById('healthStatus');
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Checking system health...';
+            
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusDiv.innerHTML = `
+                        <div class="text-green-600">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>All Systems Operational</strong>
+                            <div class="text-sm text-gray-600 mt-2">
+                                Database: ${data.database || 'Connected'} • 
+                                Version: ${data.version} • 
+                                Checked: ${new Date(data.timestamp).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="text-red-600">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>System Issues Detected</strong>
+                            <div class="text-sm text-gray-600 mt-2">
+                                Error: ${data.error || 'Unknown error'}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="text-red-600">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        <strong>Cannot Connect to API</strong>
+                        <div class="text-sm text-gray-600 mt-2">
+                            Please check if the server is running
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-check health on page load
+        window.addEventListener('load', checkSystemHealth);
+    </script>
+</body>
+</html>

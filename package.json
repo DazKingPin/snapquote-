@@ -2,38 +2,35 @@
   "name": "snapquote",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "dev:sandbox": "wrangler pages dev dist --d1=snapquote-db --local --ip 0.0.0.0 --port 3000",
-    "build": "vite build",
-    "preview": "wrangler pages dev dist",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name snapquote",
-    "deploy:prod": "npm run build && wrangler pages deploy dist --project-name snapquote",
-    "db:migrate:local": "wrangler d1 migrations apply snapquote-db --local",
-    "db:migrate:prod": "wrangler d1 migrations apply snapquote-db",
-    "db:seed": "wrangler d1 execute snapquote-db --local --file=./seed.sql",
-    "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate:local && npm run db:seed",
-    "db:console:local": "wrangler d1 execute snapquote-db --local",
-    "db:console:prod": "wrangler d1 execute snapquote-db",
-    "test": "curl http://localhost:3000",
-    "clean-port": "fuser -k 3000/tcp 2>/dev/null || true",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "dev": "vercel dev",
+    "build": "tsc --noEmit && echo 'Build completed'",
+    "start": "node api/index.js",
+    "deploy": "vercel --prod",
+    "preview": "vercel",
+    "test": "curl http://localhost:3000/api/health",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.9.4",
     "@hono/zod-validator": "^0.4.0",
-    "zod": "^3.23.0",
-    "stripe": "^17.5.0",
-    "openai": "^4.73.0",
-    "uuid": "^10.0.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "@supabase/supabase-js": "^2.56.0",
+    "@types/pg": "^8.15.5",
+    "@vercel/node": "^5.3.13",
     "date-fns": "^3.6.0",
-    "twilio": "^5.4.0"
+    "drizzle-kit": "^0.31.4",
+    "drizzle-orm": "^0.44.4",
+    "hono": "^4.9.4",
+    "openai": "^4.73.0",
+    "pg": "^8.16.3",
+    "stripe": "^17.5.0",
+    "twilio": "^5.4.0",
+    "uuid": "^10.0.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@hono/vite-build": "^1.2.0",
-    "@hono/vite-dev-server": "^0.18.2",
-    "@cloudflare/workers-types": "^4.20250705.0",
-    "vite": "^6.3.5",
-    "wrangler": "^4.4.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^20.19.11",
+    "supabase": "^1.200.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.3.5"
   }
 }

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapQuote Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                        SnapQuote Analytics
+                    </h1>
+                    <div class="flex items-center space-x-4">
+                        <a href="/" class="text-blue-600 hover:text-blue-800">← Back to Home</a>
+                        <span class="text-sm text-gray-500">Real-time Metrics</span>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Performance Metrics -->
+        <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Response Time Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fas fa-clock text-blue-500 text-2xl"></i>
+                        <span class="text-xs text-gray-500">Target: &lt;15s</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-500">Avg Response Time</h3>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">
+                        <span id="avgResponseTime">--</span>
+                    </p>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div id="responseTimeBar" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Confidence Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fas fa-brain text-purple-500 text-2xl"></i>
+                        <span class="text-xs text-gray-500">Target: &gt;75%</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-500">AI Confidence</h3>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">
+                        <span id="aiConfidence">--</span>
+                    </p>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div id="confidenceBar" class="bg-purple-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Success Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fas fa-credit-card text-green-500 text-2xl"></i>
+                        <span class="text-xs text-gray-500">Target: &gt;95%</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-500">Payment Success</h3>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">
+                        <span id="paymentSuccess">--</span>
+                    </p>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                            <div id="paymentBar" class="bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Health Card -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fas fa-heartbeat text-red-500 text-2xl"></i>
+                        <span class="text-xs text-green-500">FREE Tier</span>
+                    </div>
+                    <h3 class="text-sm font-medium text-gray-500">System Status</h3>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">
+                        <span id="systemStatus">Checking...</span>
+                    </p>
+                    <div class="text-xs text-gray-500 mt-2">
+                        <span id="lastCheck">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Funnel -->
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-funnel-dollar mr-2"></i>
+                        Conversion Funnel (Last 30 Days)
+                    </h2>
+                    <select id="timeRange" class="text-sm border rounded px-3 py-1">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                </div>
+                <canvas id="funnelChart" height="80"></canvas>
+            </div>
+
+            <!-- Performance Timeline -->
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-area mr-2"></i>
+                    Performance Timeline
+                </h2>
+                <canvas id="performanceChart" height="80"></canvas>
+            </div>
+
+            <!-- Real-time Events and System Info -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- System Information -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        System Information
+                    </h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Platform:</span>
+                            <span class="font-medium">Vercel (FREE)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Database:</span>
+                            <span class="font-medium">Supabase PostgreSQL</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Storage:</span>
+                            <span class="font-medium">Supabase Storage</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">AI Provider:</span>
+                            <span class="font-medium">OpenAI GPT-4o Vision</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Payments:</span>
+                            <span class="font-medium">Stripe</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Messaging:</span>
+                            <span class="font-medium">WhatsApp Business API</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-stream mr-2"></i>
+                        Recent Activity
+                    </h2>
+                    <div class="space-y-3" id="recentActivity">
+                        <div class="text-gray-500 text-center py-4">
+                            Loading recent activity...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        const sampleData = {
+            funnelData: [1000, 850, 720, 650, 400, 380],
+            performanceData: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                responseTime: [8.2, 7.8, 9.1, 12.3, 8.7, 7.5],
+                aiConfidence: [0.87, 0.89, 0.85, 0.82, 0.88, 0.91],
+                paymentSuccess: [96.2, 97.1, 95.8, 96.5, 97.3, 96.8]
+            }
+        };
+
+        // Initialize funnel chart
+        const funnelCtx = document.getElementById('funnelChart').getContext('2d');
+        const funnelChart = new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Messages', 'Images', 'Analyses', 'Quotes', 'Payments Initiated', 'Payments Completed'],
+                datasets: [{
+                    label: 'Conversion Funnel',
+                    data: sampleData.funnelData,
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(217, 70, 239, 0.8)',
+                        'rgba(16, 185, 129, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(99, 102, 241, 1)',
+                        'rgba(139, 92, 246, 1)',
+                        'rgba(168, 85, 247, 1)',
+                        'rgba(217, 70, 239, 1)',
+                        'rgba(16, 185, 129, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Initialize performance timeline chart
+        const perfCtx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(perfCtx, {
+            type: 'line',
+            data: {
+                labels: sampleData.performanceData.labels,
+                datasets: [
+                    {
+                        label: 'Response Time (s)',
+                        data: sampleData.performanceData.responseTime,
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'AI Confidence',
+                        data: sampleData.performanceData.aiConfidence.map(x => x * 100),
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Response Time (seconds)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'AI Confidence (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // Update dashboard metrics
+        async function updateDashboard() {
+            try {
+                // Check system health
+                const healthResponse = await fetch('/api/health');
+                const healthData = await healthResponse.json();
+                
+                document.getElementById('systemStatus').textContent = 
+                    healthData.status === 'healthy' ? '✅ Healthy' : '❌ Issues';
+                document.getElementById('lastCheck').textContent = 
+                    'Last check: ' + new Date().toLocaleTimeString();
+
+                // Update sample metrics (in real app, this would fetch from API)
+                document.getElementById('avgResponseTime').textContent = '12.3s';
+                document.getElementById('aiConfidence').textContent = '87.5%';
+                document.getElementById('paymentSuccess').textContent = '96.2%';
+
+                // Update progress bars
+                document.getElementById('responseTimeBar').style.width = '82%';
+                document.getElementById('confidenceBar').style.width = '87.5%';
+                document.getElementById('paymentBar').style.width = '96.2%';
+
+                // Update recent activity
+                const activities = [
+                    '🤖 AI analysis completed for customer +1-555-0123',
+                    '💰 Payment of $450 received from Quote #QUO-001',
+                    '📱 WhatsApp message processed in 2.1s',
+                    '📊 Performance metrics updated',
+                    '✅ System health check passed'
+                ];
+
+                const activityHtml = activities.map(activity => 
+                    `<div class="flex items-start space-x-3">
+                        <div class="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                        <span class="text-sm text-gray-700">${activity}</span>
+                    </div>`
+                ).join('');
+
+                document.getElementById('recentActivity').innerHTML = activityHtml;
+
+            } catch (error) {
+                console.error('Failed to update dashboard:', error);
+                document.getElementById('systemStatus').textContent = '❌ Error';
+            }
+        }
+
+        // Time range change handler
+        document.getElementById('timeRange').addEventListener('change', function() {
+            // In a real app, this would fetch new data based on the selected range
+            console.log('Time range changed to:', this.value, 'days');
+        });
+
+        // Update dashboard every 30 seconds
+        setInterval(updateDashboard, 30000);
+        
+        // Initial dashboard update
+        updateDashboard();
+    </script>
+</body>
+</html>
