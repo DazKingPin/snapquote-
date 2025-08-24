@@ -1,34 +1,34 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
-  "compatibility_date": "2025-08-24",
+  "name": "snapquote",
+  "main": "src/index.tsx",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
-  "compatibility_flags": [
-    "nodejs_compat"
+
+  // D1 Database for relational data
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "snapquote-db",
+      "database_id": "YOUR_DATABASE_ID" // Will be replaced after creation
+    }
+  ],
+
+  // KV Namespace for caching and session data
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "YOUR_KV_ID", // Will be replaced after creation
+      "preview_id": "YOUR_KV_PREVIEW_ID"
+    }
+  ],
+
+  // R2 Storage for images and files
+  "r2_buckets": [
+    {
+      "binding": "R2",
+      "bucket_name": "snapquote-images"
+    }
   ]
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
-  // "ai": {
-  //   "binding": "AI"
-  // }
 }
