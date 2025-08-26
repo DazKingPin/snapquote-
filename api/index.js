@@ -1425,23 +1425,110 @@ export default async function handler(req, res) {
     // Create Quote page
     if (path === '/create-quote') {
       const businessId = url.searchParams.get('business') || 'demo_business_123';
-      const createQuoteHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Quote - SnapQuote</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="max-w-4xl mx-auto py-8 px-4">
+      
+      const html = '<!DOCTYPE html>' +
+        '<html><head>' +
+        '<meta charset="UTF-8">' +
+        '<title>Create Quote - SnapQuote</title>' +
+        '<script src="https://cdn.tailwindcss.com"></script>' +
+        '</head><body class="bg-gray-100 min-h-screen">' +
+        '<div class="max-w-4xl mx-auto py-8 px-4">' +
+        '<div class="bg-white rounded-lg shadow-md p-6 mb-6">' +
+        '<div class="flex items-center justify-between">' +
+        '<div><h1 class="text-2xl font-bold text-gray-800">Create New Quote</h1>' +
+        '<p class="text-gray-600">Generate quotes for your customers</p></div>' +
+        '<a href="/dashboard?business=' + businessId + '" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">' +
+        'Back to Dashboard</a></div></div>' +
+        '<div class="grid lg:grid-cols-2 gap-6">' +
+        '<div class="bg-white rounded-lg shadow-md p-6">' +
+        '<h2 class="text-xl font-semibold mb-4">Customer Information</h2>' +
+        '<div class="space-y-4">' +
+        '<input type="text" id="customer-name" placeholder="Customer Name *" required class="w-full p-3 border border-gray-300 rounded-md">' +
+        '<input type="email" id="customer-email" placeholder="Customer Email" class="w-full p-3 border border-gray-300 rounded-md">' +
+        '<input type="tel" id="customer-phone" placeholder="Phone Number *" required class="w-full p-3 border border-gray-300 rounded-md">' +
+        '<select id="service-type" required class="w-full p-3 border border-gray-300 rounded-md">' +
+        '<option value="">Select Service Type *</option>' +
+        '<option value="construction">Construction</option>' +
+        '<option value="renovation">Renovation</option>' +
+        '<option value="repair">Repair Work</option>' +
+        '<option value="maintenance">Maintenance</option>' +
+        '<option value="plumbing">Plumbing</option>' +
+        '<option value="electrical">Electrical</option>' +
+        '<option value="painting">Painting</option>' +
+        '</select>' +
+        '<textarea id="project-description" rows="3" placeholder="Project Description *" required class="w-full p-3 border border-gray-300 rounded-md"></textarea>' +
+        '<div class="grid md:grid-cols-2 gap-4">' +
+        '<input type="number" id="estimated-hours" placeholder="Estimated Hours *" min="0.5" step="0.5" required class="w-full p-3 border border-gray-300 rounded-md">' +
+        '<input type="number" id="material-costs" placeholder="Material Costs (OMR)" min="0" step="0.01" class="w-full p-3 border border-gray-300 rounded-md">' +
+        '</div></div></div>' +
+        '<div class="space-y-6">' +
+        '<div class="bg-white rounded-lg shadow-md p-6">' +
+        '<h2 class="text-xl font-semibold mb-4">Quote Preview</h2>' +
+        '<div id="quote-preview" class="text-gray-500">Fill in the form to see quote calculation...</div>' +
+        '</div>' +
+        '<div class="bg-white rounded-lg shadow-md p-6">' +
+        '<h2 class="text-xl font-semibold mb-4">Actions</h2>' +
+        '<div class="space-y-3">' +
+        '<button type="button" onclick="generateQuote()" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700">Generate Final Quote</button>' +
+        '<button type="button" onclick="sendWhatsApp()" id="whatsapp-btn" disabled class="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 disabled:bg-gray-400">Send via WhatsApp</button>' +
+        '<button type="button" onclick="emailQuote()" id="email-btn" disabled class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400">Email Quote</button>' +
+        '</div></div></div></div></div>' +
+        '<script>' +
+        'let currentQuote = null;' +
+        'const hourlyRate = 75;' +
+        'function generateQuote() {' +
+        'const name = document.getElementById("customer-name").value;' +
+        'const phone = document.getElementById("customer-phone").value;' +
+        'const service = document.getElementById("service-type").value;' +
+        'const description = document.getElementById("project-description").value;' +
+        'const hours = parseFloat(document.getElementById("estimated-hours").value) || 0;' +
+        'const materials = parseFloat(document.getElementById("material-costs").value) || 0;' +
+        'if (!name || !phone || !service || !description || hours <= 0) {' +
+        'alert("Please fill in all required fields (*)");' +
+        'return;' +
+        '}' +
+        'const laborCost = hours * hourlyRate;' +
+        'const subtotal = laborCost + materials;' +
+        'const vat = subtotal * 0.05;' +
+        'const total = subtotal + vat;' +
+        'document.getElementById("quote-preview").innerHTML = ' +
+        '"<div class=\"bg-gray-50 rounded-lg p-4\">" +' +
+        '"<div class=\"flex justify-between mb-2\"><span>Labor (" + hours + " hrs × " + hourlyRate + " OMR):</span><span class=\"font-medium\">" + laborCost.toFixed(2) + " OMR</span></div>" +' +
+        '"<div class=\"flex justify-between mb-2\"><span>Materials:</span><span class=\"font-medium\">" + materials.toFixed(2) + " OMR</span></div>" +' +
+        '"<div class=\"flex justify-between mb-2\"><span>VAT (5%):</span><span class=\"font-medium\">" + vat.toFixed(2) + " OMR</span></div>" +' +
+        '"<hr class=\"my-2\">" +' +
+        '"<div class=\"flex justify-between text-lg font-bold text-green-600\"><span>Total:</span><span>" + total.toFixed(2) + " OMR</span></div>" +' +
+        '"</div>";' +
+        'currentQuote = {customer: {name: name, phone: phone}, service: service, description: description, total: total, id: "Q-" + Date.now()};' +
+        'document.getElementById("whatsapp-btn").disabled = false;' +
+        'document.getElementById("email-btn").disabled = false;' +
+        'alert("Quote Generated Successfully!\\nQuote ID: " + currentQuote.id + "\\nTotal: " + total.toFixed(2) + " OMR");' +
+        '}' +
+        'function sendWhatsApp() {' +
+        'if (!currentQuote) { alert("Please generate a quote first"); return; }' +
+        'const phone = currentQuote.customer.phone.replace(/[^0-9]/g, "");' +
+        'const message = "Hi " + currentQuote.customer.name + "! Your quote: " + currentQuote.total.toFixed(2) + " OMR. Quote ID: " + currentQuote.id;' +
+        'window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(message));' +
+        '}' +
+        'function emailQuote() {' +
+        'if (!currentQuote) { alert("Please generate a quote first"); return; }' +
+        'alert("Email feature: Quote " + currentQuote.id + " for " + currentQuote.total.toFixed(2) + " OMR");' +
+        '}' +
+        '</script>' +
+        '</body></html>';
+      
+      return sendResponse(200, html, 'text/html');
+    }
+
+    // WhatsApp Setup page
+    if (path === '/whatsapp-setup') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const whatsappSetupHtml = `
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Create New Quote</h1>
-                    <p class="text-gray-600">Generate AI-powered quotes for your customers</p>
+                    <p class="text-gray-600">Generate quotes for your customers</p>
                 </div>
                 <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
