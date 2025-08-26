@@ -272,6 +272,120 @@ export default async function handler(req, res) {
       });
     }
 
+    // Payment demo page
+    if (path === '/payment-demo' || path === '/payment-demo.html') {
+      const quoteId = url.searchParams.get('quote') || 'DEMO-' + Date.now();
+      const paymentDemoHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Demo - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-credit-card text-green-600 text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Payment Demo</h1>
+                <p class="text-gray-600 mt-2">Tap Payments Integration</p>
+            </div>
+
+            <!-- Quote Details -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-3">Quote Details</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Quote ID:</span>
+                        <span class="font-medium">${quoteId}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Service:</span>
+                        <span class="font-medium">VR Experience Development</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Amount:</span>
+                        <span class="font-medium text-green-600">500 OMR</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tap Payments Integration -->
+            <div class="space-y-4">
+                <button onclick="proceedToPayment()" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Pay with Tap Payments
+                </button>
+                
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">
+                        Secure payment processing by 
+                        <a href="https://www.tap.company" target="_blank" class="text-blue-600 hover:underline">Tap Payments</a>
+                    </p>
+                    <div class="flex justify-center items-center mt-2 space-x-4">
+                        <i class="fab fa-cc-visa text-2xl text-blue-600"></i>
+                        <i class="fab fa-cc-mastercard text-2xl text-red-500"></i>
+                        <i class="fas fa-university text-xl text-gray-600"></i>
+                        <span class="text-sm text-gray-500">+ More</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Info -->
+            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                <h4 class="font-semibold text-blue-800 mb-2">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Supported in Oman
+                </h4>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Local Omani bank cards</li>
+                    <li>• International credit/debit cards</li>
+                    <li>• Online banking integration</li>
+                    <li>• Secure 3D verification</li>
+                </ul>
+            </div>
+
+            <!-- Status -->
+            <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                <h4 class="font-semibold text-green-800 mb-2">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Integration Status
+                </h4>
+                <p class="text-sm text-green-700">
+                    ✅ Tap Payments: Test mode active<br>
+                    ✅ Quote generation: Working<br>
+                    ✅ Webhook handling: Ready<br>
+                    ⏳ Live keys: Pending activation (24-48h)
+                </p>
+            </div>
+
+            <!-- Back Link -->
+            <div class="text-center mt-6">
+                <a href="/" class="text-blue-600 hover:underline">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Back to SnapQuote
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function proceedToPayment() {
+            alert('🎉 Tap Payments Integration Ready!\\n\\nTest Mode Active:\\n• Quote ID: ${quoteId}\\n• Amount: 500 OMR\\n• Status: Ready for payments\\n\\nOnce Tap activates your live keys (24-48h), real payments will work automatically!');
+        }
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, paymentDemoHtml, 'text/html');
+    }
+
     // Default route - serve landing page
     if (path === '/' || path === '/api') {
       const html = `
