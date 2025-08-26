@@ -919,7 +919,7 @@ export default async function handler(req, res) {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
-                            <select id="business-industry" required 
+                            <select id="business-industry" required onchange="toggleOtherIndustry()"
                                     class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
                                 <option value="">Select Industry</option>
                                 <option value="construction">Construction & Contracting</option>
@@ -928,8 +928,17 @@ export default async function handler(req, res) {
                                 <option value="creative">Creative Services</option>
                                 <option value="technology">Technology Services</option>
                                 <option value="healthcare">Healthcare Services</option>
-                                <option value="other">Other</option>
+                                <option value="consulting">Consulting Services</option>
+                                <option value="repair">Repair & Maintenance</option>
+                                <option value="landscaping">Landscaping & Gardening</option>
+                                <option value="cleaning">Cleaning Services</option>
+                                <option value="other">Other (Specify)</option>
                             </select>
+                            <div id="other-industry-input" class="mt-2 hidden">
+                                <input type="text" id="custom-industry" 
+                                       class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                       placeholder="Please specify your industry...">
+                            </div>
                         </div>
                     </div>
 
@@ -1013,13 +1022,33 @@ export default async function handler(req, res) {
             document.getElementById('registration-form').scrollIntoView({ behavior: 'smooth' });
         }
         
+        function toggleOtherIndustry() {
+            const industrySelect = document.getElementById('business-industry');
+            const otherInput = document.getElementById('other-industry-input');
+            const customIndustry = document.getElementById('custom-industry');
+            
+            if (industrySelect.value === 'other') {
+                otherInput.classList.remove('hidden');
+                customIndustry.setAttribute('required', 'true');
+            } else {
+                otherInput.classList.add('hidden');
+                customIndustry.removeAttribute('required');
+                customIndustry.value = '';
+            }
+        }
+        
         document.getElementById('business-signup-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Get industry value - use custom if 'other' is selected
+            const industrySelect = document.getElementById('business-industry');
+            const customIndustry = document.getElementById('custom-industry');
+            const industryValue = industrySelect.value === 'other' ? customIndustry.value : industrySelect.value;
             
             const formData = {
                 plan: selectedPlan,
                 business_name: document.getElementById('business-name').value,
-                industry: document.getElementById('business-industry').value,
+                industry: industryValue,
                 owner_name: document.getElementById('owner-name').value,
                 email: document.getElementById('business-email').value,
                 whatsapp_number: document.getElementById('whatsapp-number').value,
@@ -1420,27 +1449,270 @@ export default async function handler(req, res) {
             </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="text-center py-12">
-                <i class="fas fa-magic text-6xl text-purple-500 mb-4"></i>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quote Generation Form</h2>
-                <p class="text-gray-600 mb-6">Complete quote generation interface coming in next update!</p>
-                <div class="space-y-3">
-                    <p class="text-sm text-gray-500">Features to include:</p>
-                    <ul class="text-left max-w-md mx-auto text-sm text-gray-600">
-                        <li>• Customer information form</li>
-                        <li>• Service type selection</li>
-                        <li>• AI image analysis upload</li>
-                        <li>• Real-time quote calculation</li>
-                        <li>• WhatsApp message composer</li>
-                    </ul>
+        <!-- Quote Generation Form -->
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Left Column - Customer & Project Info -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Customer Information</h2>
+                <form id="quote-form" class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name *</label>
+                            <input type="text" id="customer-name" required 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Enter customer name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                            <input type="email" id="customer-email" 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="customer@example.com">
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                            <input type="tel" id="customer-phone" required
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="+968 90000000">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Type *</label>
+                            <select id="service-type" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Select service...</option>
+                                <option value="construction">Construction</option>
+                                <option value="renovation">Renovation</option>
+                                <option value="repair">Repair Work</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="plumbing">Plumbing</option>
+                                <option value="electrical">Electrical</option>
+                                <option value="painting">Painting</option>
+                                <option value="landscaping">Landscaping</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Description *</label>
+                        <textarea id="project-description" rows="3" required
+                                  class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                  placeholder="Describe the work needed..."></textarea>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Hours *</label>
+                            <input type="number" id="estimated-hours" min="0.5" max="500" step="0.5" required
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="8">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Material Costs (OMR)</label>
+                            <input type="number" id="material-costs" min="0" step="0.01"
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="200">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Complexity Level</label>
+                        <select id="complexity" class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <option value="1">Simple (Standard pricing)</option>
+                            <option value="1.3">Moderate (+30%)</option>
+                            <option value="1.6">Complex (+60%)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Column - Quote Preview & Actions -->
+            <div class="space-y-6">
+                <!-- Quote Preview -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Quote Preview</h2>
+                    <div id="quote-preview" class="space-y-3">
+                        <div class="text-gray-500">Fill in the form to see quote calculation...</div>
+                    </div>
                 </div>
-                <button onclick="alert('Quote generation interface coming soon!')" class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
-                    <i class="fas fa-magic mr-2"></i>Generate Quote (Demo)
-                </button>
+                
+                <!-- Actions -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Actions</h2>
+                    <div class="space-y-3">
+                        <button type="button" onclick="generateFinalQuote()" 
+                                class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700">
+                            <i class="fas fa-file-alt mr-2"></i>Generate Final Quote
+                        </button>
+                        
+                        <button type="button" onclick="sendViaWhatsApp()" id="whatsapp-btn" disabled
+                                class="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <i class="fab fa-whatsapp mr-2"></i>Send via WhatsApp
+                        </button>
+                        
+                        <button type="button" onclick="emailQuote()" id="email-btn" disabled
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <i class="fas fa-envelope mr-2"></i>Email Quote
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Quotes -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Recent Quotes</h2>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Kitchen renovation - Sarah J.</span>
+                            <span class="font-medium text-green-600">1,250 OMR</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Bathroom repair - Mike C.</span>
+                            <span class="font-medium text-green-600">425 OMR</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 rounded">
+                            <span>Plumbing work - Lisa R.</span>
+                            <span class="font-medium text-green-600">185 OMR</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        let currentQuote = null;
+        const hourlyRate = 75; // Default rate - should come from business settings
+        
+        function calculateQuote() {
+            const hours = parseFloat(document.getElementById('estimated-hours').value) || 0;
+            const materials = parseFloat(document.getElementById('material-costs').value) || 0;
+            const complexity = parseFloat(document.getElementById('complexity').value) || 1;
+            
+            if (hours <= 0) {
+                document.getElementById('quote-preview').innerHTML = '<div class="text-gray-500">Enter estimated hours to calculate quote...</div>';
+                return;
+            }
+            
+            const laborCost = hours * hourlyRate * complexity;
+            const subtotal = laborCost + materials;
+            const vat = subtotal * 0.05; // 5% VAT
+            const total = subtotal + vat;
+            
+            document.getElementById('quote-preview').innerHTML = 
+                '<div class="bg-gray-50 rounded-lg p-4">' +
+                    '<div class="flex justify-between mb-2">' +
+                        '<span>Labor (' + hours + ' hrs × ' + hourlyRate + ' OMR × ' + complexity + 'x):</span>' +
+                        '<span class="font-medium">' + laborCost.toFixed(2) + ' OMR</span>' +
+                    '</div>' +
+                    '<div class="flex justify-between mb-2">' +
+                        '<span>Materials:</span>' +
+                        '<span class="font-medium">' + materials.toFixed(2) + ' OMR</span>' +
+                    '</div>' +
+                    '<div class="flex justify-between mb-2">' +
+                        '<span>VAT (5%):</span>' +
+                        '<span class="font-medium">' + vat.toFixed(2) + ' OMR</span>' +
+                    '</div>' +
+                    '<hr class="my-2">' +
+                    '<div class="flex justify-between text-lg font-bold text-green-600">' +
+                        '<span>Total:</span>' +
+                        '<span>' + total.toFixed(2) + ' OMR</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="mt-3 text-xs text-gray-500">' +
+                    '<p>• Quote valid for 30 days</p>' +
+                    '<p>• Payment terms: 50% upfront, 50% on completion</p>' +
+                    '<p>• Includes materials, labor, and cleanup</p>' +
+                '</div>';
+            
+            // Store quote data
+            currentQuote = {
+                customer: {
+                    name: document.getElementById('customer-name').value,
+                    email: document.getElementById('customer-email').value,
+                    phone: document.getElementById('customer-phone').value
+                },
+                service: document.getElementById('service-type').value,
+                description: document.getElementById('project-description').value,
+                hours: hours,
+                hourlyRate: hourlyRate,
+                complexity: complexity,
+                materials: materials,
+                laborCost: laborCost,
+                subtotal: subtotal,
+                vat: vat,
+                total: total,
+                quoteId: 'Q-' + Date.now()
+            };
+        }
+        
+        function generateFinalQuote() {
+            if (!validateForm()) return;
+            
+            calculateQuote();
+            if (!currentQuote) return;
+            
+            // Enable action buttons
+            document.getElementById('whatsapp-btn').disabled = false;
+            document.getElementById('email-btn').disabled = false;
+            
+            alert('Quote Generated Successfully!\n\nQuote ID: ' + currentQuote.quoteId + '\nCustomer: ' + currentQuote.customer.name + '\nTotal: ' + currentQuote.total.toFixed(2) + ' OMR\n\nYou can now send this quote via WhatsApp or email.');
+        }
+        
+        function sendViaWhatsApp() {
+            if (!currentQuote) {
+                alert('Please generate a quote first');
+                return;
+            }
+            
+            const phone = currentQuote.customer.phone.replace(/[^0-9]/g, '');
+            const message = 'Hi ' + currentQuote.customer.name + '!\n\n📝 Your Quote: ' + currentQuote.quoteId + '\nService: ' + currentQuote.service + '\nDescription: ' + currentQuote.description + '\n\n💰 Total Cost: ' + currentQuote.total.toFixed(2) + ' OMR\n\nBreakdown:\n- Labor: ' + currentQuote.laborCost.toFixed(2) + ' OMR\n- Materials: ' + currentQuote.materials.toFixed(2) + ' OMR\n- VAT: ' + currentQuote.vat.toFixed(2) + ' OMR\n\n✅ Valid for 30 days\n📞 Contact us to proceed!\n\nThank you for choosing us!';
+            
+            const whatsappUrl = 'https://wa.me/' + phone + '?text=' + encodeURIComponent(message);
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function emailQuote() {
+            if (!currentQuote) {
+                alert('Please generate a quote first');
+                return;
+            }
+            
+            const email = currentQuote.customer.email;
+            if (!email) {
+                alert('Customer email is required to send quote via email');
+                return;
+            }
+            
+            const subject = 'Quote ' + currentQuote.quoteId + ' - ' + currentQuote.service;
+            const body = 'Dear ' + currentQuote.customer.name + ',\n\nThank you for your inquiry. Please find your quote details below:\n\nQuote ID: ' + currentQuote.quoteId + '\nService: ' + currentQuote.service + '\nDescription: ' + currentQuote.description + '\n\nTotal Cost: ' + currentQuote.total.toFixed(2) + ' OMR\n\nBreakdown:\n- Labor: ' + currentQuote.laborCost.toFixed(2) + ' OMR\n- Materials: ' + currentQuote.materials.toFixed(2) + ' OMR\n- VAT (5%): ' + currentQuote.vat.toFixed(2) + ' OMR\n\nThis quote is valid for 30 days.\nPayment terms: 50% upfront, 50% on completion.\n\nPlease contact us to proceed with the work.\n\nBest regards,\nYour Service Team';
+            
+            const mailtoUrl = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+            window.location.href = mailtoUrl;
+        }
+        
+        function validateForm() {
+            const required = ['customer-name', 'customer-phone', 'service-type', 'project-description', 'estimated-hours'];
+            
+            for (let field of required) {
+                if (!document.getElementById(field).value) {
+                    alert('Please fill in all required fields (*)');
+                    document.getElementById(field).focus();
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add input listeners for real-time calculation
+            ['estimated-hours', 'material-costs', 'complexity'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateQuote);
+                document.getElementById(id).addEventListener('change', calculateQuote);
+            });
+        });
+    </script>
 </body>
 </html>`;
       
