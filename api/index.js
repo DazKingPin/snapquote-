@@ -247,6 +247,76 @@ export default async function handler(req, res) {
       }
     }
 
+    // Business signup endpoint
+    if (path === '/api/business/signup' && req.method === 'POST') {
+      try {
+        // Handle different request body formats
+        let data = {};
+        if (req.body) {
+          data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } else if (req.read) {
+          const body = await new Promise((resolve) => {
+            let chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+          });
+          data = JSON.parse(body || '{}');
+        }
+
+        // Generate business ID
+        const businessId = 'biz_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+        
+        // Create business record
+        const business = {
+          id: businessId,
+          business_name: data.business_name,
+          industry: data.industry,
+          owner_name: data.owner_name,
+          email: data.email,
+          whatsapp_number: data.whatsapp_number,
+          country: data.country,
+          hourly_rate: data.hourly_rate || 50,
+          plan: data.plan,
+          status: 'trial',
+          trial_ends: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString()
+        };
+
+        // Store in database (if available)
+        if (supabase) {
+          const { error } = await supabase
+            .from('businesses')
+            .insert([business]);
+          
+          if (error) {
+            console.error('Database error:', error);
+          }
+        }
+
+        return sendResponse(200, {
+          success: true,
+          business_id: businessId,
+          message: 'Business account created successfully',
+          trial_ends: business.trial_ends,
+          next_steps: [
+            'Check your email for welcome instructions',
+            'Set up your WhatsApp Business API',
+            'Configure your first quote template',
+            'Start receiving customer quotes!'
+          ],
+          timestamp: new Date().toISOString()
+        });
+
+      } catch (error) {
+        return sendResponse(400, {
+          success: false,
+          error: error.message,
+          message: 'Failed to create business account',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
     // WhatsApp webhook endpoint (placeholder)
     if (path === '/api/webhook/whatsapp' && req.method === 'POST') {
       return sendResponse(200, {
@@ -386,6 +456,230 @@ export default async function handler(req, res) {
       return sendResponse(200, paymentDemoHtml, 'text/html');
     }
 
+    // Business signup page
+    if (path === '/signup' || path === '/register') {
+      const signupHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Your Business - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-blue-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-600 rounded-full mb-4">
+                    <i class="fas fa-rocket text-white text-2xl"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Start Your SnapQuote Business</h1>
+                <p class="text-xl text-gray-600">
+                    Join thousands of businesses generating instant quotes via WhatsApp
+                </p>
+            </div>
+
+            <!-- Pricing Cards -->
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                    <h3 class="text-lg font-semibold mb-2">Starter</h3>
+                    <div class="text-3xl font-bold text-gray-800 mb-4">$49<span class="text-sm text-gray-500">/month</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>✓ 100 quotes/month</li>
+                        <li>✓ Website widget</li>
+                        <li>✓ Basic AI analysis</li>
+                        <li>✓ Email support</li>
+                    </ul>
+                    <button onclick="selectPlan('starter')" class="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300">
+                        Select Plan
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center border-2 border-purple-500 relative">
+                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white px-3 py-1 rounded-full text-sm">
+                        Most Popular
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Professional</h3>
+                    <div class="text-3xl font-bold text-purple-600 mb-4">$149<span class="text-sm text-gray-500">/month</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>✓ 500 quotes/month</li>
+                        <li>✓ WhatsApp integration</li>
+                        <li>✓ Advanced AI analysis</li>
+                        <li>✓ Custom branding</li>
+                        <li>✓ Priority support</li>
+                    </ul>
+                    <button onclick="selectPlan('professional')" class="w-full bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+                        Select Plan
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+                    <h3 class="text-lg font-semibold mb-2">Enterprise</h3>
+                    <div class="text-3xl font-bold text-gray-800 mb-4">$399<span class="text-sm text-gray-500">/month</span></div>
+                    <ul class="text-sm text-gray-600 space-y-2 mb-6">
+                        <li>✓ Unlimited quotes</li>
+                        <li>✓ Multi-location support</li>
+                        <li>✓ API access</li>
+                        <li>✓ Custom integrations</li>
+                        <li>✓ Dedicated support</li>
+                    </ul>
+                    <button onclick="selectPlan('enterprise')" class="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300">
+                        Contact Sales
+                    </button>
+                </div>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="registration-form" class="bg-white rounded-lg shadow-lg p-8 hidden">
+                <h2 class="text-2xl font-semibold mb-6">Create Your Business Account</h2>
+                <form id="business-signup-form" class="space-y-4">
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
+                            <input type="text" id="business-name" required 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Mike's Plumbing Service">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
+                            <select id="business-industry" required 
+                                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Select Industry</option>
+                                <option value="construction">Construction & Contracting</option>
+                                <option value="automotive">Automotive Services</option>
+                                <option value="home-services">Home Services</option>
+                                <option value="creative">Creative Services</option>
+                                <option value="technology">Technology Services</option>
+                                <option value="healthcare">Healthcare Services</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Owner Name *</label>
+                            <input type="text" id="owner-name" required 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="Mike Johnson">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                            <input type="email" id="business-email" required 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="mike@mikesplumbing.com">
+                        </div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Business Number</label>
+                            <input type="tel" id="whatsapp-number" 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                   placeholder="+1-555-123-4567">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                            <select id="business-country" required 
+                                    class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <option value="">Select Country</option>
+                                <option value="US">United States</option>
+                                <option value="CA">Canada</option>
+                                <option value="GB">United Kingdom</option>
+                                <option value="AU">Australia</option>
+                                <option value="OM">Oman</option>
+                                <option value="AE">UAE</option>
+                                <option value="SA">Saudi Arabia</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (Local Currency)</label>
+                        <input type="number" id="hourly-rate" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="75" min="10" max="1000">
+                    </div>
+
+                    <div class="flex items-center">
+                        <input type="checkbox" id="terms-agree" required class="mr-2">
+                        <label class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-purple-600 hover:underline">Terms of Service</a> and 
+                            <a href="#" class="text-purple-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Start Free Trial (14 Days)
+                    </button>
+                </form>
+            </div>
+
+            <!-- Back to Demo -->
+            <div class="text-center mt-8">
+                <a href="/" class="text-purple-600 hover:underline">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Demo Platform
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPlan = '';
+        
+        function selectPlan(plan) {
+            selectedPlan = plan;
+            document.getElementById('registration-form').classList.remove('hidden');
+            document.getElementById('registration-form').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        document.getElementById('business-signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                plan: selectedPlan,
+                business_name: document.getElementById('business-name').value,
+                industry: document.getElementById('business-industry').value,
+                owner_name: document.getElementById('owner-name').value,
+                email: document.getElementById('business-email').value,
+                whatsapp_number: document.getElementById('whatsapp-number').value,
+                country: document.getElementById('business-country').value,
+                hourly_rate: document.getElementById('hourly-rate').value
+            };
+            
+            try {
+                const response = await fetch('/api/business/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('🎉 Business Account Created!\\n\\nWelcome to SnapQuote!\\nBusiness ID: ' + result.business_id + '\\n\\nCheck your email for setup instructions.');
+                    window.location.href = '/dashboard?business=' + result.business_id;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error creating account: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, signupHtml, 'text/html');
+    }
+
     // Default route - serve landing page
     if (path === '/' || path === '/api') {
       const html = `
@@ -406,9 +700,19 @@ export default async function handler(req, res) {
                 <i class="fas fa-quote-right text-white text-2xl"></i>
             </div>
             <h1 class="text-4xl font-bold text-gray-800 mb-4">SnapQuote</h1>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
                 AI-powered instant quote generation via WhatsApp. Get professional quotes in seconds with image analysis and smart pricing.
             </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/signup" class="bg-purple-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Start Your Business
+                </a>
+                <button onclick="scrollToDemo()" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-play mr-2"></i>
+                    Try Demo
+                </button>
+            </div>
         </div>
 
         <!-- Features Grid -->
@@ -672,6 +976,10 @@ export default async function handler(req, res) {
                     alert('Payment link copied to clipboard!');
                 });
             }
+        }
+        
+        function scrollToDemo() {
+            document.querySelector('.bg-white.rounded-lg.shadow-lg').scrollIntoView({ behavior: 'smooth' });
         }
 
         // Add test quote generation function
