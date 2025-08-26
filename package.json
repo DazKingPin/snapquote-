@@ -4,7 +4,7 @@
   "description": "AI-powered instant quote generation via WhatsApp - FREE Vercel + Supabase stack",
   "type": "module",
   "scripts": {
-    "build": "echo 'Build completed - Vercel handles deployment'",
+    "build": "mkdir -p dist && cp -r api dist/ && cp -r public dist/ 2>/dev/null || echo 'Build completed'",
     "start": "node server.js",
     "dev": "node server.js"
   },
@@ -14,7 +14,7 @@
     "stripe": "^14.15.0"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
   "devDependencies": {
     "vercel": "^46.0.2"
