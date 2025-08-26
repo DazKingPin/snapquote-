@@ -11,14 +11,14 @@ async function sendWelcomeEmail(businessData) {
   
   try {
     const emailPayload = {
-      from: 'SnapQuote <onboarding@resend.dev>',
+      from: 'Smartthinkerz <noreply@smartthinkerz.com>',
       to: [businessData.email],
-      subject: `Welcome to SnapQuote! Your ${businessData.planName} account is ready`,
+      subject: `Welcome to Smartthinkerz! Your ${businessData.planName} account is ready`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: #667eea; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to SnapQuote!</h1>
-                <p style="margin: 10px 0 0 0; font-size: 18px;">Your AI-Powered Quote Generation Platform</p>
+                <h1 style="margin: 0; font-size: 28px;">🧠 Welcome to Smartthinkerz!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 18px;">Your Intelligent Business Solutions Platform</p>
             </div>
             <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
                 <h2 style="color: #667eea; margin-top: 0;">Hi ${businessData.businessName}! 👋</h2>
@@ -31,7 +31,7 @@ async function sendWelcomeEmail(businessData) {
                     <p><strong>Business ID:</strong> ${businessData.businessId}</p>
                 </div>
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://snapquote-six.vercel.app/dashboard?business=${businessData.businessId}" 
+                    <a href="https://smartthinkerz.com/dashboard?business=${businessData.businessId}" 
                        style="display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">Access Your Dashboard</a>
                 </div>
                 <p style="color: #666; text-align: center;">Need help? Visit our support center.</p>
@@ -77,7 +77,7 @@ async function generateTapPayment(quote) {
   const tapApiKey = process.env.TAP_SECRET_KEY;
   
   if (!tapApiKey) {
-    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+    return `https://smartthinkerz.com/payment-demo?quote=${quote.id}`;
   }
   
   try {
@@ -105,10 +105,10 @@ async function generateTapPayment(quote) {
         id: 'src_all'
       },
       post: {
-        url: 'https://snapquote-six.vercel.app/api/webhook/tap'
+        url: 'https://smartthinkerz.com/api/webhook/tap'
       },
       redirect: {
-        url: 'https://snapquote-six.vercel.app/payment-success'
+        url: 'https://smartthinkerz.com/payment-success'
       }
     };
     
@@ -127,10 +127,10 @@ async function generateTapPayment(quote) {
       return tapResponse.transaction.url;
     }
     
-    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+    return `https://smartthinkerz.com/payment-demo?quote=${quote.id}`;
   } catch (error) {
     console.error('Tap Payment Error:', error);
-    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+    return `https://smartthinkerz.com/payment-demo?quote=${quote.id}`;
   }
 }
 
@@ -181,7 +181,7 @@ export default async function handler(req, res) {
       const dbStatus = supabase ? 'connected' : 'not configured';
       return sendResponse(200, {
         status: 'healthy',
-        message: 'SnapQuote API is running!',
+        message: 'Smartthinkerz API is running!',
         database: dbStatus,
         timestamp: new Date().toISOString(),
         version: '1.0.0'
@@ -426,7 +426,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Demo - SnapQuote</title>
+    <title>Payment Demo - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -514,7 +514,7 @@ export default async function handler(req, res) {
             <div class="text-center mt-6">
                 <a href="/" class="text-blue-600 hover:underline">
                     <i class="fas fa-arrow-left mr-1"></i>
-                    Back to SnapQuote
+                    Back to Smartthinkerz
                 </a>
             </div>
         </div>
@@ -540,7 +540,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Dashboard - SnapQuote</title>
+    <title>Business Dashboard - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -552,7 +552,7 @@ export default async function handler(req, res) {
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <h1 class="text-xl font-bold text-purple-600">SnapQuote Dashboard</h1>
+                        <h1 class="text-xl font-bold text-purple-600">Smartthinkerz Dashboard</h1>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -838,7 +838,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Start Your Business - SnapQuote</title>
+    <title>Start Your Business - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -850,7 +850,7 @@ export default async function handler(req, res) {
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-600 rounded-full mb-4">
                     <i class="fas fa-rocket text-white text-2xl"></i>
                 </div>
-                <h1 class="text-4xl font-bold text-gray-800 mb-4">Start Your SnapQuote Business</h1>
+                <h1 class="text-4xl font-bold text-gray-800 mb-4">Start Your Smartthinkerz Business</h1>
                 <p class="text-xl text-gray-600">
                     Join thousands of businesses generating instant quotes via WhatsApp
                 </p>
@@ -1067,7 +1067,7 @@ export default async function handler(req, res) {
                 
                 const result = await response.json();
                 if (result.success) {
-                    alert('🎉 Business Account Created!\\n\\nWelcome to SnapQuote!\\nBusiness ID: ' + result.business_id + '\\n\\nCheck your email for setup instructions.');
+                    alert('🎉 Business Account Created!\\n\\nWelcome to Smartthinkerz!\\nBusiness ID: ' + result.business_id + '\\n\\nCheck your email for setup instructions.');
                     window.location.href = '/dashboard?business=' + result.business_id;
                 } else {
                     alert('Error: ' + result.message);
@@ -1091,7 +1091,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapQuote - AI-Powered Instant Quotes</title>
+    <title>Smartthinkerz - Intelligent Business Solutions</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -1102,7 +1102,7 @@ export default async function handler(req, res) {
             <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-4">
                 <i class="fas fa-quote-right text-white text-2xl"></i>
             </div>
-            <h1 class="text-4xl font-bold text-gray-800 mb-4">SnapQuote</h1>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Smartthinkerz</h1>
             <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
                 AI-powered instant quote generation via WhatsApp. Get professional quotes in seconds with image analysis and smart pricing.
             </p>
@@ -1279,7 +1279,7 @@ export default async function handler(req, res) {
 
         <!-- Footer -->
         <div class="text-center mt-12 text-gray-500">
-            <p>&copy; 2024 SnapQuote Platform | Powered by Vercel + Supabase</p>
+            <p>&copy; 2024 Smartthinkerz Platform | Powered by Vercel + Supabase</p>
             <p class="mt-2">Timestamp: ${new Date().toISOString()}</p>
         </div>
     </div>
@@ -1429,7 +1429,7 @@ export default async function handler(req, res) {
       const html = '<!DOCTYPE html>' +
         '<html><head>' +
         '<meta charset="UTF-8">' +
-        '<title>Create Quote - SnapQuote</title>' +
+        '<title>Create Quote - Smartthinkerz</title>' +
         '<script src="https://cdn.tailwindcss.com"></script>' +
         '</head><body class="bg-gray-100 min-h-screen">' +
         '<div class="max-w-4xl mx-auto py-8 px-4">' +
@@ -1815,7 +1815,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Setup - SnapQuote</title>
+    <title>WhatsApp Setup - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -1872,7 +1872,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricing Configuration - SnapQuote</title>
+    <title>Pricing Configuration - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -1929,7 +1929,7 @@ export default async function handler(req, res) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Analytics - SnapQuote</title>
+    <title>Advanced Analytics - Smartthinkerz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
 </head>

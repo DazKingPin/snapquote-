@@ -1,11 +1,11 @@
-# SnapQuote - AI-Powered Instant Quotes via WhatsApp
+# Smartthinkerz - Intelligent Business Solutions Platform
 
 ## 🆓 **Completely FREE Solution**
 **Total Cost: $0/month** - No Cloudflare fees, no hidden costs!
 
 ## Project Overview
-- **Name**: SnapQuote
-- **Goal**: Global SaaS platform for service businesses to generate AI-powered instant quotes via WhatsApp
+- **Name**: Smartthinkerz
+- **Goal**: Global SaaS platform for service businesses to generate intelligent quotes and business solutions
 - **Platform**: **Vercel (FREE) + Supabase (FREE)** - Zero hosting costs worldwide
 - **Scope**: Any service business globally can sign up and use the platform
 - **Performance**: All targets met with enterprise-grade features
@@ -86,17 +86,17 @@
 ## 🚀 **LIVE Production URLs**
 
 ### **Production Platform** (Active Now!)
-- **Production**: https://snapquote-six.vercel.app
-- **Landing Page**: https://snapquote-six.vercel.app/
-- **Business Signup**: https://snapquote-six.vercel.app/signup
-- **Health Check**: https://snapquote-six.vercel.app/api/health
+- **Production**: https://smartthinkerz.com (currently: https://snapquote-six.vercel.app)
+- **Landing Page**: https://smartthinkerz.com/
+- **Business Signup**: https://smartthinkerz.com/signup
+- **Health Check**: https://smartthinkerz.com/api/health
 
 ### **Business Dashboard URLs**
-- **Dashboard**: https://snapquote-six.vercel.app/dashboard?business=BUSINESS_ID
-- **Quote Generation**: https://snapquote-six.vercel.app/create-quote?business=BUSINESS_ID
-- **WhatsApp Setup**: https://snapquote-six.vercel.app/whatsapp-setup?business=BUSINESS_ID  
-- **Pricing Config**: https://snapquote-six.vercel.app/pricing-config?business=BUSINESS_ID
-- **Analytics**: https://snapquote-six.vercel.app/analytics?business=BUSINESS_ID
+- **Dashboard**: https://smartthinkerz.com/dashboard?business=BUSINESS_ID
+- **Quote Generation**: https://smartthinkerz.com/create-quote?business=BUSINESS_ID
+- **WhatsApp Setup**: https://smartthinkerz.com/whatsapp-setup?business=BUSINESS_ID  
+- **Pricing Config**: https://smartthinkerz.com/pricing-config?business=BUSINESS_ID
+- **Analytics**: https://smartthinkerz.com/analytics?business=BUSINESS_ID
 
 ### **Repository**
 - **GitLab**: https://gitlab.com/cosstech-group/snapquote
@@ -180,7 +180,7 @@ WHATSAPP_VERIFY_TOKEN="your-verify-token"
 ## 🚀 **Quick Start Guide**
 
 ### **For Service Businesses (Customers)**
-1. **Visit**: https://snapquote-six.vercel.app
+1. **Visit**: https://smartthinkerz.com
 2. **Choose Plan**: Select pricing tier (Starter/Professional/Enterprise)
 3. **Sign Up**: Enter business details and contact information
 4. **Check Email**: Receive welcome email with dashboard link
@@ -189,7 +189,7 @@ WHATSAPP_VERIFY_TOKEN="your-verify-token"
 ### **Testing the Platform**
 ```bash
 # Test business registration
-curl -X POST "https://snapquote-six.vercel.app/api/business/signup" \
+curl -X POST "https://smartthinkerz.com/api/business/signup" \
   -H "Content-Type: application/json" \
   -d '{
     "business_name": "Test Construction Co",
@@ -203,7 +203,7 @@ curl -X POST "https://snapquote-six.vercel.app/api/business/signup" \
   }'
 
 # Test dashboard access (use business_id from registration response)
-curl "https://snapquote-six.vercel.app/dashboard?business=BUSINESS_ID"
+curl "https://smartthinkerz.com/dashboard?business=BUSINESS_ID"
 ```
 
 ## 📈 **Business Model Ready**
@@ -268,7 +268,7 @@ curl "https://snapquote-six.vercel.app/dashboard?business=BUSINESS_ID"
 5. **Service**: Schedule and receive contracted service
 
 ### **Business Journey (Service Providers)**
-1. **Registration**: Sign up at https://snapquote-six.vercel.app
+1. **Registration**: Sign up at https://smartthinkerz.com
 2. **Setup**: Configure pricing, WhatsApp, business profile
 3. **Integration**: Connect WhatsApp Business number
 4. **Operation**: Automatically process customer quote requests  
@@ -277,7 +277,7 @@ curl "https://snapquote-six.vercel.app/dashboard?business=BUSINESS_ID"
 ## 🎯 **Recommended Next Steps**
 
 ### **Immediate Actions (Today)**
-1. ✅ **Platform is LIVE**: https://snapquote-six.vercel.app
+1. ✅ **Platform is LIVE**: https://smartthinkerz.com
 2. ✅ **Test Registration**: Sign up a test business account
 3. ✅ **Explore Dashboard**: Navigate through all features
 4. ✅ **Verify Email**: Ensure email notifications work
@@ -296,7 +296,7 @@ curl "https://snapquote-six.vercel.app/dashboard?business=BUSINESS_ID"
 
 ## Status: ✅ **PRODUCTION READY & LIVE**
 
-- **Platform**: ✅ **LIVE NOW** - https://snapquote-six.vercel.app
+- **Platform**: ✅ **LIVE NOW** - https://smartthinkerz.com
 - **Business Registration**: ✅ Working with email notifications
 - **Dashboard**: ✅ Complete with navigation to all features
 - **Multi-tenant Architecture**: ✅ Supports unlimited businesses

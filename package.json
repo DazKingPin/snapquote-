@@ -1,7 +1,7 @@
 {
-  "name": "snapquote",
+  "name": "smartthinkerz",
   "version": "1.0.0",
-  "description": "AI-powered instant quote generation via WhatsApp - FREE Vercel + Supabase stack",
+  "description": "Intelligent business solutions platform - FREE Vercel + Supabase stack",
   "type": "module",
   "scripts": {
     "build": "mkdir -p dist && cp -r api dist/ && cp -r public dist/ 2>/dev/null || echo 'Build completed'",
