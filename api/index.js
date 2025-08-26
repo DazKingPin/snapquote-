@@ -456,6 +456,301 @@ export default async function handler(req, res) {
       return sendResponse(200, paymentDemoHtml, 'text/html');
     }
 
+    // Business dashboard page
+    if (path === '/dashboard') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const dashboardHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Dashboard - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Top Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-purple-600">SnapQuote Dashboard</h1>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">Business ID: ${businessId}</span>
+                    <button class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                        <i class="fas fa-cog mr-1"></i> Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-quote-right text-2xl text-blue-500"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Quotes</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="total-quotes">Loading...</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Conversion Rate</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="conversion-rate">Loading...</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-dollar-sign text-2xl text-yellow-500"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Revenue (MTD)</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="monthly-revenue">Loading...</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fab fa-whatsapp text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">WhatsApp Status</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="whatsapp-status">Not Connected</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Quick Actions -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="generateTestQuote()" class="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus-circle mb-2 text-xl"></i>
+                                <div class="font-medium">Generate Quote</div>
+                                <div class="text-sm opacity-80">Create manual quote</div>
+                            </button>
+                            
+                            <button onclick="setupWhatsApp()" class="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fab fa-whatsapp mb-2 text-xl"></i>
+                                <div class="font-medium">Connect WhatsApp</div>
+                                <div class="text-sm opacity-80">Set up automation</div>
+                            </button>
+                            
+                            <button onclick="configurePricing()" class="bg-purple-600 text-white p-4 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-cogs mb-2 text-xl"></i>
+                                <div class="font-medium">Configure Pricing</div>
+                                <div class="text-sm opacity-80">Set rates & rules</div>
+                            </button>
+                            
+                            <button onclick="viewAnalytics()" class="bg-orange-600 text-white p-4 rounded-lg hover:bg-orange-700 transition-colors">
+                                <i class="fas fa-chart-line mb-2 text-xl"></i>
+                                <div class="font-medium">View Analytics</div>
+                                <div class="text-sm opacity-80">Business insights</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Quotes -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Quotes</h3>
+                        <div id="recent-quotes" class="space-y-3">
+                            <!-- Sample data -->
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <div class="font-medium">Kitchen Renovation Quote</div>
+                                    <div class="text-sm text-gray-500">Customer: Sarah Johnson • 2 hours ago</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium text-green-600">$2,500</div>
+                                    <div class="text-sm text-gray-500">Paid</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <div class="font-medium">Bathroom Repair Quote</div>
+                                    <div class="text-sm text-gray-500">Customer: Mike Chen • 5 hours ago</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium text-orange-600">$850</div>
+                                    <div class="text-sm text-gray-500">Pending</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <div class="font-medium">Plumbing Emergency</div>
+                                    <div class="text-sm text-gray-500">Customer: Lisa Rodriguez • 1 day ago</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-medium text-green-600">$325</div>
+                                    <div class="text-sm text-gray-500">Paid</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button class="text-purple-600 hover:text-purple-700 font-medium">View All Quotes →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Business Info -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Business Profile</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Business Name</label>
+                                <input type="text" id="business-name-display" value="Demo Construction Co." 
+                                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Hourly Rate</label>
+                                <input type="number" id="hourly-rate-display" value="85" 
+                                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">WhatsApp Number</label>
+                                <input type="tel" id="whatsapp-display" value="+1-555-DEMO-123" 
+                                       class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                            
+                            <button onclick="updateProfile()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700">
+                                Update Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setup Progress -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Setup Progress</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                                <span class="text-sm">Account created</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                                <span class="text-sm">Basic profile completed</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-circle text-gray-300 mr-3"></i>
+                                <span class="text-sm text-gray-500">WhatsApp connected</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-circle text-gray-300 mr-3"></i>
+                                <span class="text-sm text-gray-500">First quote generated</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-600 h-2 rounded-full" style="width: 50%"></div>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">50% Complete</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Mock data for demo
+                document.getElementById('total-quotes').textContent = '47';
+                document.getElementById('conversion-rate').textContent = '68%';
+                document.getElementById('monthly-revenue').textContent = '$12,450';
+                document.getElementById('whatsapp-status').textContent = 'Demo Mode';
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        function generateTestQuote() {
+            window.open('/', '_blank');
+        }
+
+        function setupWhatsApp() {
+            alert('🚀 WhatsApp Business API Integration\\n\\nComing Soon!\\n\\nThis will connect your WhatsApp Business number to SnapQuote for automated quote generation.\\n\\nFor now, you can generate quotes manually and share payment links via WhatsApp.');
+        }
+
+        function configurePricing() {
+            alert('⚙️ Pricing Configuration\\n\\nConfigure your:\\n• Hourly rates by service type\\n• Material markup percentages\\n• Complexity multipliers\\n• Minimum quote amounts\\n\\nComing in next update!');
+        }
+
+        function viewAnalytics() {
+            alert('📊 Advanced Analytics\\n\\nView detailed insights:\\n• Quote conversion funnel\\n• Peak request times\\n• Popular services\\n• Revenue trends\\n• Customer analytics\\n\\nComing soon!');
+        }
+
+        function updateProfile() {
+            alert('✅ Profile Updated!\\n\\nYour business profile has been updated successfully.');
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, dashboardHtml, 'text/html');
+    }
+
     // Business signup page
     if (path === '/signup' || path === '/register') {
       const signupHtml = `
