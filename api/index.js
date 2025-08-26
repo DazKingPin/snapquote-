@@ -1,5 +1,101 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Email service for notifications (using Resend - free tier)
+async function sendWelcomeEmail(businessData) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (!resendApiKey) {
+    console.log('No Resend API key found, email notification skipped');
+    return { success: false, message: 'Email service not configured' };
+  }
+  
+  try {
+    const emailPayload = {
+      from: 'SnapQuote <noreply@snapquote.ai>',
+      to: [businessData.email],
+      subject: `Welcome to SnapQuote! Your ${businessData.planName} account is ready`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Welcome to SnapQuote</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to SnapQuote!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Your AI-Powered Quote Generation Platform</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #667eea; margin-top: 0;">Hi ${businessData.businessName}! 👋</h2>
+                
+                <p>Congratulations! Your <strong>${businessData.planName}</strong> account has been successfully created. You're now ready to start generating AI-powered quotes for your customers via WhatsApp.</p>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                    <h3 style="margin-top: 0; color: #667eea;">📋 Your Account Details</h3>
+                    <p><strong>Business:</strong> ${businessData.businessName}</p>
+                    <p><strong>Email:</strong> ${businessData.email}</p>
+                    <p><strong>Plan:</strong> ${businessData.planName}</p>
+                    <p><strong>Business ID:</strong> ${businessData.businessId}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://snapquote-six.vercel.app/dashboard?business=${businessData.businessId}" 
+                       style="display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Access Your Dashboard</a>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin-top: 0; color: #667eea;">🚀 Next Steps</h3>
+                    <ol>
+                        <li><strong>Connect WhatsApp:</strong> Link your WhatsApp Business number</li>
+                        <li><strong>Configure Pricing:</strong> Set your service rates and pricing rules</li>
+                        <li><strong>Generate First Quote:</strong> Create your first AI-powered quote</li>
+                        <li><strong>Monitor Analytics:</strong> Track your quote performance</li>
+                    </ol>
+                </div>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0;"><strong>💡 Pro Tip:</strong> Upload sample images of your work to improve AI quote accuracy!</p>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                
+                <p style="color: #666; font-size: 14px; text-align: center;">Need help? Reply to this email or visit our <a href="https://snapquote-six.vercel.app/support" style="color: #667eea;">support center</a>.</p>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: #999; font-size: 12px;">SnapQuote - AI-Powered Quote Generation Platform<br>Making business quotes faster, smarter, and more profitable.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+      `
+    };
+    
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailPayload)
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      return { success: true, emailId: result.id, message: 'Welcome email sent successfully' };
+    } else {
+      console.error('Failed to send email:', result);
+      return { success: false, message: result.message || 'Failed to send email' };
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
+    return { success: false, message: 'Email service error' };
+  }
+}
+
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -293,11 +389,23 @@ export default async function handler(req, res) {
           }
         }
 
+        // Send welcome email
+        const emailData = {
+          businessName: business.business_name,
+          email: business.email,
+          planName: business.plan || 'Trial',
+          businessId: businessId
+        };
+        
+        const emailResult = await sendWelcomeEmail(emailData);
+        console.log('Welcome email result:', emailResult);
+
         return sendResponse(200, {
           success: true,
           business_id: businessId,
           message: 'Business account created successfully',
           trial_ends: business.trial_ends,
+          email_sent: emailResult.success,
           next_steps: [
             'Check your email for welcome instructions',
             'Set up your WhatsApp Business API',
@@ -723,19 +831,23 @@ export default async function handler(req, res) {
         }
 
         function generateTestQuote() {
-            window.open('/', '_blank');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = `/create-quote?business=${businessId}`;
         }
 
         function setupWhatsApp() {
-            alert('🚀 WhatsApp Business API Integration\\n\\nComing Soon!\\n\\nThis will connect your WhatsApp Business number to SnapQuote for automated quote generation.\\n\\nFor now, you can generate quotes manually and share payment links via WhatsApp.');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = `/whatsapp-setup?business=${businessId}`;
         }
 
         function configurePricing() {
-            alert('⚙️ Pricing Configuration\\n\\nConfigure your:\\n• Hourly rates by service type\\n• Material markup percentages\\n• Complexity multipliers\\n• Minimum quote amounts\\n\\nComing in next update!');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = `/pricing-config?business=${businessId}`;
         }
 
         function viewAnalytics() {
-            alert('📊 Advanced Analytics\\n\\nView detailed insights:\\n• Quote conversion funnel\\n• Peak request times\\n• Popular services\\n• Revenue trends\\n• Customer analytics\\n\\nComing soon!');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = `/analytics?business=${businessId}`;
         }
 
         function updateProfile() {
@@ -1314,6 +1426,1031 @@ export default async function handler(req, res) {
       return sendResponse(200, html, 'text/html');
     }
 
+    // Create Quote page
+    if (path === '/create-quote') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const createQuoteHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quote - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Create New Quote</h1>
+                    <p class="text-gray-600">Generate AI-powered quotes for your customers</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Quote Form -->
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Left Column - Quote Details -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Quote Information</h2>
+                <form id="quote-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                        <input type="text" id="customer-name" required 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="Enter customer name">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                        <input type="email" id="customer-email" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="customer@example.com">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Phone</label>
+                        <input type="tel" id="customer-phone" 
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="+968 90000000">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+                        <select id="service-type" required class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                            <option value="">Select service type...</option>
+                            <option value="construction">Construction</option>
+                            <option value="renovation">Renovation</option>
+                            <option value="repair">Repair</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="plumbing">Plumbing</option>
+                            <option value="electrical">Electrical</option>
+                            <option value="painting">Painting</option>
+                            <option value="landscaping">Landscaping</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Description</label>
+                        <textarea id="project-description" rows="4" required
+                                  class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                                  placeholder="Describe the project in detail..."></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Hours</label>
+                        <input type="number" id="estimated-hours" min="1" max="1000" required
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="Enter estimated hours">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Material Costs (Optional)</label>
+                        <input type="number" id="material-costs" min="0" step="0.01"
+                               class="w-full p-3 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500"
+                               placeholder="Enter material costs in OMR">
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Column - Image Upload & Quote Preview -->
+            <div class="space-y-6">
+                <!-- Image Upload -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Project Images (AI Analysis)</h2>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <div id="image-upload-area">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 mb-4">Upload project images for AI analysis</p>
+                            <input type="file" id="project-images" multiple accept="image/*" class="hidden">
+                            <button type="button" onclick="document.getElementById('project-images').click()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                                <i class="fas fa-plus mr-2"></i>Select Images
+                            </button>
+                        </div>
+                        <div id="image-preview" class="mt-4 hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Quote Preview -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Quote Preview</h2>
+                    <div id="quote-preview" class="space-y-3 text-gray-600">
+                        <p>Fill in the form to generate quote preview...</p>
+                    </div>
+                    
+                    <div class="mt-6 space-y-3">
+                        <button type="button" onclick="generateQuote()" 
+                                class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700">
+                            <i class="fas fa-magic mr-2"></i>Generate AI Quote
+                        </button>
+                        
+                        <button type="button" onclick="sendWhatsApp()" id="send-whatsapp-btn" disabled
+                                class="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            <i class="fab fa-whatsapp mr-2"></i>Send via WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuote = null;
+        
+        // Real-time quote preview
+        document.addEventListener('input', updateQuotePreview);
+        
+        function updateQuotePreview() {
+            const hours = parseFloat(document.getElementById('estimated-hours').value) || 0;
+            const materials = parseFloat(document.getElementById('material-costs').value) || 0;
+            const hourlyRate = 75; // From business profile
+            
+            const laborCost = hours * hourlyRate;
+            const subtotal = laborCost + materials;
+            const tax = subtotal * 0.05; // 5% VAT
+            const total = subtotal + tax;
+            
+            const preview = document.getElementById('quote-preview');
+            if (hours > 0) {
+                preview.innerHTML = `
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex justify-between mb-2">
+                            <span>Labor (${hours} hrs × ${hourlyRate} OMR):</span>
+                            <span class="font-medium">${laborCost.toFixed(2)} OMR</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span>Materials:</span>
+                            <span class="font-medium">${materials.toFixed(2)} OMR</span>
+                        </div>
+                        <div class="flex justify-between mb-2">
+                            <span>VAT (5%):</span>
+                            <span class="font-medium">${tax.toFixed(2)} OMR</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="flex justify-between text-lg font-bold text-green-600">
+                            <span>Total:</span>
+                            <span>${total.toFixed(2)} OMR</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function generateQuote() {
+            const formData = {
+                customer_name: document.getElementById('customer-name').value,
+                customer_email: document.getElementById('customer-email').value,
+                customer_phone: document.getElementById('customer-phone').value,
+                service_type: document.getElementById('service-type').value,
+                project_description: document.getElementById('project-description').value,
+                estimated_hours: parseFloat(document.getElementById('estimated-hours').value),
+                material_costs: parseFloat(document.getElementById('material-costs').value) || 0
+            };
+            
+            if (!formData.customer_name || !formData.service_type || !formData.project_description || !formData.estimated_hours) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/generate-quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    currentQuote = result.quote;
+                    document.getElementById('send-whatsapp-btn').disabled = false;
+                    alert(`Quote Generated Successfully!\nQuote ID: ${result.quote.id}\nTotal: ${result.quote.amount} ${result.quote.currency}\nPayment URL: ${result.payment_url}`);
+                } else {
+                    alert('Error generating quote: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function sendWhatsApp() {
+            if (!currentQuote) {
+                alert('Please generate a quote first');
+                return;
+            }
+            
+            const phone = document.getElementById('customer-phone').value;
+            if (!phone) {
+                alert('Please enter customer phone number');
+                return;
+            }
+            
+            const message = `Hi ${currentQuote.customer.name}! Your quote for ${currentQuote.description} is ready:\n\n💰 Total: ${currentQuote.amount} ${currentQuote.currency}\n🔗 Pay here: ${currentQuote.payment_url}\n\nThank you for choosing us!`;
+            const whatsappUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // Image upload preview
+        document.getElementById('project-images').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const preview = document.getElementById('image-preview');
+            
+            if (files.length > 0) {
+                preview.classList.remove('hidden');
+                preview.innerHTML = '';
+                
+                for (let i = 0; i < Math.min(files.length, 4); i++) {
+                    const file = files[i];
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-20 h-20 object-cover rounded inline-block mr-2 mb-2';
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, createQuoteHtml, 'text/html');
+    }
+
+    // WhatsApp Setup page
+    if (path === '/whatsapp-setup') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const whatsappSetupHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Setup - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                        WhatsApp Business API Setup
+                    </h1>
+                    <p class="text-gray-600">Connect your WhatsApp Business number for automated quote delivery</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Setup Steps -->
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Left Column - Instructions -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">Setup Instructions</h2>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-medium text-green-600">1</span>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-800">WhatsApp Business Account</h3>
+                            <p class="text-sm text-gray-600">Make sure you have a WhatsApp Business account with a verified phone number</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-medium text-green-600">2</span>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-800">Scan QR Code</h3>
+                            <p class="text-sm text-gray-600">Use WhatsApp Business app to scan the QR code on the right</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-medium text-green-600">3</span>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-800">Authorize Connection</h3>
+                            <p class="text-sm text-gray-600">Approve the connection to enable automated quote sending</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span class="text-sm font-medium text-green-600">4</span>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-800">Test Connection</h3>
+                            <p class="text-sm text-gray-600">Send a test message to verify the integration is working</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Status -->
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>
+                        <span class="font-medium text-yellow-800">Connection Status: Not Connected</span>
+                    </div>
+                    <p class="text-sm text-yellow-700 mt-1">WhatsApp Business API integration coming in Phase 2. Currently using manual sharing.</p>
+                </div>
+            </div>
+
+            <!-- Right Column - QR Code & Connection -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">QR Code Setup</h2>
+                
+                <!-- QR Code Placeholder -->
+                <div class="bg-gray-100 rounded-lg p-8 text-center mb-4">
+                    <div class="w-48 h-48 mx-auto bg-white rounded-lg flex items-center justify-center border-2 border-gray-300">
+                        <div class="text-gray-500 text-center">
+                            <i class="fas fa-qrcode text-4xl mb-2"></i>
+                            <p class="text-sm">QR Code will appear here</p>
+                            <p class="text-xs text-gray-400 mt-1">Coming in Phase 2</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Manual Setup for Now -->
+                <div class="border-t pt-4">
+                    <h3 class="font-medium text-gray-800 mb-3">Manual WhatsApp Integration (Current)</h3>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp Business Number</label>
+                            <input type="tel" id="whatsapp-number" 
+                                   class="w-full p-3 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                   placeholder="+968 90000000">
+                        </div>
+                        
+                        <button onclick="saveWhatsAppNumber()" 
+                                class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700">
+                            <i class="fab fa-whatsapp mr-2"></i>Save WhatsApp Number
+                        </button>
+                        
+                        <button onclick="testWhatsApp()" 
+                                class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700">
+                            <i class="fas fa-paper-plane mr-2"></i>Test Message
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Future Features -->
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 class="font-medium text-blue-800 mb-2">Coming in Phase 2:</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• Automatic QR code generation</li>
+                        <li>• Real-time message delivery</li>
+                        <li>• Customer response handling</li>
+                        <li>• Message templates management</li>
+                        <li>• Delivery status tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveWhatsAppNumber() {
+            const number = document.getElementById('whatsapp-number').value;
+            if (!number) {
+                alert('Please enter your WhatsApp Business number');
+                return;
+            }
+            
+            // Save to business profile (placeholder)
+            alert('✅ WhatsApp number saved successfully!\n\nNumber: ' + number + '\n\nYou can now use the "Test Message" to verify your setup.');
+        }
+        
+        function testWhatsApp() {
+            const number = document.getElementById('whatsapp-number').value;
+            if (!number) {
+                alert('Please save your WhatsApp number first');
+                return;
+            }
+            
+            const testMessage = 'Hello! This is a test message from SnapQuote. Your WhatsApp integration is working correctly! 🎉';
+            const whatsappUrl = `https://wa.me/${number.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(testMessage)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, whatsappSetupHtml, 'text/html');
+    }
+
+    // Pricing Configuration page
+    if (path === '/pricing-config') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const pricingConfigHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Configuration - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-6xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-cogs text-purple-500 mr-2"></i>
+                        Pricing Configuration
+                    </h1>
+                    <p class="text-gray-600">Set up your service rates, material markups, and pricing rules</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- Left Column - Pricing Settings -->
+            <div class="space-y-6">
+                <!-- Basic Rates -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Basic Hourly Rates</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Construction Work</label>
+                            <div class="relative">
+                                <input type="number" id="construction-rate" value="75" min="10" max="500" step="5"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Renovation Work</label>
+                            <div class="relative">
+                                <input type="number" id="renovation-rate" value="85" min="10" max="500" step="5"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Emergency Repairs</label>
+                            <div class="relative">
+                                <input type="number" id="emergency-rate" value="120" min="10" max="500" step="5"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Maintenance Work</label>
+                            <div class="relative">
+                                <input type="number" id="maintenance-rate" value="65" min="10" max="500" step="5"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Material Markups -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Material Markups</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Standard Materials</label>
+                            <div class="relative">
+                                <input type="number" id="standard-markup" value="25" min="0" max="100" step="5"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Premium Materials</label>
+                            <div class="relative">
+                                <input type="number" id="premium-markup" value="35" min="0" max="100" step="5"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Specialized Materials</label>
+                            <div class="relative">
+                                <input type="number" id="specialized-markup" value="45" min="0" max="100" step="5"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Rules & Preview -->
+            <div class="space-y-6">
+                <!-- Complexity Multipliers -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Complexity Multipliers</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Simple Projects</label>
+                            <div class="relative">
+                                <input type="number" id="simple-multiplier" value="1.0" min="0.5" max="3.0" step="0.1"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">x</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Moderate Complexity</label>
+                            <div class="relative">
+                                <input type="number" id="moderate-multiplier" value="1.3" min="0.5" max="3.0" step="0.1"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">x</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">High Complexity</label>
+                            <div class="relative">
+                                <input type="number" id="complex-multiplier" value="1.8" min="0.5" max="3.0" step="0.1"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">x</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimum Amounts & Tax -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Minimum Amounts & Tax</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Minimum Quote Amount</label>
+                            <div class="relative">
+                                <input type="number" id="minimum-amount" value="50" min="10" max="1000" step="10"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">VAT Rate</label>
+                            <div class="relative">
+                                <input type="number" id="vat-rate" value="5" min="0" max="25" step="0.5"
+                                       class="w-full p-3 pr-8 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Charge</label>
+                            <div class="relative">
+                                <input type="number" id="service-charge" value="15" min="0" max="100" step="5"
+                                       class="w-full p-3 pr-16 border border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <span class="text-gray-500 text-sm">OMR</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quote Preview Calculator -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Pricing Calculator Preview</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="text-sm text-gray-600 space-y-2">
+                            <div class="flex justify-between">
+                                <span>Construction (8 hrs):</span>
+                                <span id="preview-labor">600.00 OMR</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Materials (25% markup):</span>
+                                <span id="preview-materials">250.00 OMR</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Complexity (1.3x):</span>
+                                <span id="preview-complexity">+255.00 OMR</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Service Charge:</span>
+                                <span id="preview-service">15.00 OMR</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>VAT (5%):</span>
+                                <span id="preview-vat">56.00 OMR</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="flex justify-between font-bold text-lg text-green-600">
+                                <span>Total:</span>
+                                <span id="preview-total">1,176.00 OMR</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="savePricingConfig()" 
+                            class="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-purple-700">
+                        <i class="fas fa-save mr-2"></i>Save Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real-time preview updates
+        document.addEventListener('input', updatePreview);
+        
+        function updatePreview() {
+            const constructionRate = parseFloat(document.getElementById('construction-rate').value);
+            const materialMarkup = parseFloat(document.getElementById('standard-markup').value) / 100;
+            const complexityMultiplier = parseFloat(document.getElementById('moderate-multiplier').value);
+            const serviceCharge = parseFloat(document.getElementById('service-charge').value);
+            const vatRate = parseFloat(document.getElementById('vat-rate').value) / 100;
+            
+            // Sample calculation: 8 hours construction, 200 OMR materials
+            const hours = 8;
+            const baseMaterials = 200;
+            
+            const labor = hours * constructionRate;
+            const materials = baseMaterials * (1 + materialMarkup);
+            const complexityAdjustment = (labor + materials) * (complexityMultiplier - 1);
+            const subtotal = labor + materials + complexityAdjustment + serviceCharge;
+            const vat = subtotal * vatRate;
+            const total = subtotal + vat;
+            
+            document.getElementById('preview-labor').textContent = labor.toFixed(2) + ' OMR';
+            document.getElementById('preview-materials').textContent = materials.toFixed(2) + ' OMR';
+            document.getElementById('preview-complexity').textContent = '+' + complexityAdjustment.toFixed(2) + ' OMR';
+            document.getElementById('preview-service').textContent = serviceCharge.toFixed(2) + ' OMR';
+            document.getElementById('preview-vat').textContent = vat.toFixed(2) + ' OMR';
+            document.getElementById('preview-total').textContent = total.toFixed(2) + ' OMR';
+        }
+        
+        function savePricingConfig() {
+            const config = {
+                hourly_rates: {
+                    construction: parseFloat(document.getElementById('construction-rate').value),
+                    renovation: parseFloat(document.getElementById('renovation-rate').value),
+                    emergency: parseFloat(document.getElementById('emergency-rate').value),
+                    maintenance: parseFloat(document.getElementById('maintenance-rate').value)
+                },
+                material_markups: {
+                    standard: parseFloat(document.getElementById('standard-markup').value),
+                    premium: parseFloat(document.getElementById('premium-markup').value),
+                    specialized: parseFloat(document.getElementById('specialized-markup').value)
+                },
+                complexity_multipliers: {
+                    simple: parseFloat(document.getElementById('simple-multiplier').value),
+                    moderate: parseFloat(document.getElementById('moderate-multiplier').value),
+                    complex: parseFloat(document.getElementById('complex-multiplier').value)
+                },
+                minimums_and_tax: {
+                    minimum_amount: parseFloat(document.getElementById('minimum-amount').value),
+                    vat_rate: parseFloat(document.getElementById('vat-rate').value),
+                    service_charge: parseFloat(document.getElementById('service-charge').value)
+                }
+            };
+            
+            // Save configuration (placeholder)
+            alert('✅ Pricing Configuration Saved!\n\nYour pricing rules have been updated successfully. All new quotes will use these rates.');
+            console.log('Pricing config:', config);
+        }
+        
+        // Initialize preview
+        updatePreview();
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, pricingConfigHtml, 'text/html');
+    }
+
+    // Advanced Analytics page
+    if (path === '/analytics') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const analyticsHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Analytics - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-chart-line text-orange-500 mr-2"></i>
+                        Advanced Analytics
+                    </h1>
+                    <p class="text-gray-600">Detailed insights into your quote performance and business metrics</p>
+                </div>
+                <div class="flex space-x-3">
+                    <select class="border border-gray-300 rounded-md px-3 py-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option>Last 30 days</option>
+                        <option>Last 7 days</option>
+                        <option>Last 90 days</option>
+                        <option>This year</option>
+                    </select>
+                    <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Metrics Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Quotes</p>
+                        <p class="text-2xl font-bold text-gray-900">247</p>
+                        <p class="text-sm text-green-600">+12.5% vs last month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-quote-right text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Conversion Rate</p>
+                        <p class="text-2xl font-bold text-gray-900">68.3%</p>
+                        <p class="text-sm text-green-600">+5.2% vs last month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Avg. Quote Value</p>
+                        <p class="text-2xl font-bold text-gray-900">1,245 OMR</p>
+                        <p class="text-sm text-green-600">+8.7% vs last month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-dollar-sign text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Response Time</p>
+                        <p class="text-2xl font-bold text-gray-900">4.2 min</p>
+                        <p class="text-sm text-green-600">-15.3% vs last month</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid lg:grid-cols-2 gap-6 mb-6">
+            <!-- Quote Conversion Funnel -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Quote Conversion Funnel</h3>
+                <canvas id="conversionFunnel" width="400" height="200"></canvas>
+            </div>
+            
+            <!-- Revenue Trend -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Revenue Trend (30 Days)</h3>
+                <canvas id="revenueTrend" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Popular Services -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Popular Services</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                            <span class="text-sm font-medium">Construction</span>
+                        </div>
+                        <span class="text-sm text-gray-600">42%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                            <span class="text-sm font-medium">Renovation</span>
+                        </div>
+                        <span class="text-sm text-gray-600">28%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                            <span class="text-sm font-medium">Repairs</span>
+                        </div>
+                        <span class="text-sm text-gray-600">18%</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                            <span class="text-sm font-medium">Maintenance</span>
+                        </div>
+                        <span class="text-sm text-gray-600">12%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Peak Request Times -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Peak Request Times</h3>
+                <canvas id="peakTimes" width="300" height="200"></canvas>
+            </div>
+
+            <!-- Customer Analytics -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Customer Insights</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium">Repeat Customers</span>
+                        <span class="text-sm text-gray-600">34%</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium">Avg. Customer Value</span>
+                        <span class="text-sm text-gray-600">2,850 OMR</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium">Customer Satisfaction</span>
+                        <span class="text-sm text-gray-600">4.8/5.0</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-sm font-medium">Referral Rate</span>
+                        <span class="text-sm text-gray-600">22%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Conversion Funnel Chart
+        const funnelCtx = document.getElementById('conversionFunnel').getContext('2d');
+        new Chart(funnelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Requests', 'Quotes Sent', 'Viewed', 'Paid'],
+                datasets: [{
+                    label: 'Conversion Funnel',
+                    data: [360, 247, 198, 169],
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(99, 102, 241)',
+                        'rgb(34, 197, 94)',
+                        'rgb(251, 191, 36)',
+                        'rgb(239, 68, 68)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Revenue Trend Chart
+        const revenueCtx = document.getElementById('revenueTrend').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Revenue (OMR)',
+                    data: [12000, 15200, 18400, 21500],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Peak Times Chart
+        const peakTimesCtx = document.getElementById('peakTimes').getContext('2d');
+        new Chart(peakTimesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Morning', 'Afternoon', 'Evening', 'Night'],
+                datasets: [{
+                    data: [35, 28, 25, 12],
+                    backgroundColor: [
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(107, 114, 128, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>`;
+      
+      return sendResponse(200, analyticsHtml, 'text/html');
+    }
+
     // 404 for unknown routes
     return sendResponse(404, {
       error: 'Not Found',
@@ -1323,7 +2460,12 @@ export default async function handler(req, res) {
         '/api/db-test',
         '/api/generate-quote',
         '/api/webhook/whatsapp',
-        '/api/analytics'
+        '/api/analytics',
+        '/dashboard',
+        '/create-quote',
+        '/whatsapp-setup',
+        '/pricing-config',
+        '/analytics'
       ],
       timestamp: new Date().toISOString()
     });
