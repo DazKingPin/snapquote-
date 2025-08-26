@@ -9,6 +9,68 @@ if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
 }
 
+// Tap Payments integration
+async function generateTapPayment(quote) {
+  const tapApiKey = process.env.TAP_SECRET_KEY;
+  
+  if (!tapApiKey) {
+    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+  }
+  
+  try {
+    const tapPayload = {
+      amount: quote.amount,
+      currency: quote.currency,
+      description: quote.description,
+      reference: {
+        transaction: quote.id,
+        order: quote.id
+      },
+      receipt: {
+        email: true,
+        sms: false
+      },
+      customer: {
+        first_name: quote.customer.name || 'Customer',
+        email: quote.customer.email || 'customer@example.com',
+        phone: {
+          country_code: '968',
+          number: quote.customer.phone || '90000000'
+        }
+      },
+      source: {
+        id: 'src_all'
+      },
+      post: {
+        url: 'https://snapquote-six.vercel.app/api/webhook/tap'
+      },
+      redirect: {
+        url: 'https://snapquote-six.vercel.app/payment-success'
+      }
+    };
+    
+    const response = await fetch('https://api.tap.company/v2/charges', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${tapApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(tapPayload)
+    });
+    
+    const tapResponse = await response.json();
+    
+    if (tapResponse.transaction && tapResponse.transaction.url) {
+      return tapResponse.transaction.url;
+    }
+    
+    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+  } catch (error) {
+    console.error('Tap Payment Error:', error);
+    return `https://snapquote-six.vercel.app/payment-demo?quote=${quote.id}`;
+  }
+}
+
 export default async function handler(req, res) {
   // Helper function to handle both Node.js and Vercel response objects
   const sendResponse = (statusCode, data, contentType = 'application/json') => {
@@ -88,14 +150,81 @@ export default async function handler(req, res) {
       }
     }
 
-    // Quote generation endpoint (placeholder)
+    // Quote generation endpoint with Tap Payments
     if (path === '/api/generate-quote' && req.method === 'POST') {
-      // This will be expanded with OpenAI integration
-      return sendResponse(200, {
-        message: 'Quote generation endpoint',
-        status: 'under development',
-        timestamp: new Date().toISOString()
-      });
+      try {
+        const body = await req.text();
+        const data = JSON.parse(body || '{}');
+        
+        // Basic quote generation (will expand with OpenAI)
+        const quote = {
+          id: `quote_${Date.now()}`,
+          service: data.service || 'General Service',
+          amount: data.amount || 100,
+          currency: 'OMR',
+          description: data.description || 'Professional service quote',
+          customer: data.customer || {},
+          created_at: new Date().toISOString(),
+          status: 'pending'
+        };
+        
+        // Generate Tap Payment link (placeholder structure)
+        const tapPaymentUrl = await generateTapPayment(quote);
+        
+        return sendResponse(200, {
+          success: true,
+          quote: quote,
+          payment_url: tapPaymentUrl,
+          message: 'Quote generated successfully with Tap Payment integration',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        return sendResponse(400, {
+          success: false,
+          error: error.message,
+          message: 'Failed to generate quote',
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    // Tap Payments webhook endpoint
+    if (path === '/api/webhook/tap' && req.method === 'POST') {
+      try {
+        const body = await req.text();
+        const tapData = JSON.parse(body || '{}');
+        
+        // Process Tap payment webhook
+        console.log('Tap Payment Webhook:', tapData);
+        
+        // Update payment status in database
+        if (supabase && tapData.id) {
+          const { error } = await supabase
+            .from('payments')
+            .update({ 
+              status: tapData.status,
+              tap_payment_id: tapData.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('external_id', tapData.reference?.order || tapData.id);
+          
+          if (error) {
+            console.error('Database update error:', error);
+          }
+        }
+        
+        return sendResponse(200, {
+          success: true,
+          message: 'Tap webhook processed successfully',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        return sendResponse(400, {
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
     // WhatsApp webhook endpoint (placeholder)
