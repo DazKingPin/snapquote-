@@ -325,20 +325,27 @@ export default async function handler(req, res) {
         <!-- API Status -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
             <h2 class="text-2xl font-semibold mb-4">API Status</h2>
-            <div class="grid md:grid-cols-2 gap-4">
+            <div class="grid md:grid-cols-3 gap-4">
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h3 class="font-medium text-gray-800 mb-2">System Health</h3>
-                    <button onclick="checkHealth()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <button onclick="checkHealth()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
                         Check API Health
                     </button>
                     <div id="health-result" class="mt-2 text-sm"></div>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-4">
                     <h3 class="font-medium text-gray-800 mb-2">Database Connection</h3>
-                    <button onclick="checkDatabase()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <button onclick="checkDatabase()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
                         Test Database
                     </button>
                     <div id="db-result" class="mt-2 text-sm"></div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-800 mb-2">Quote Generation</h3>
+                    <button onclick="testQuoteGeneration()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                        Generate Test Quote
+                    </button>
+                    <div class="mt-2 text-xs text-gray-500">Test Tap Payments integration</div>
                 </div>
             </div>
         </div>
@@ -382,9 +389,9 @@ export default async function handler(req, res) {
                 result.innerHTML = '<span class="text-blue-600">Checking...</span>';
                 const response = await fetch('/api/health');
                 const data = await response.json();
-                result.innerHTML = \`<span class="text-green-600">✓ \${data.status} - \${data.message}</span>\`;
+                result.innerHTML = '<span class="text-green-600">✓ ' + data.status + ' - ' + data.message + '</span>';
             } catch (error) {
-                result.innerHTML = \`<span class="text-red-600">✗ Error: \${error.message}</span>\`;
+                result.innerHTML = '<span class="text-red-600">✗ Error: ' + error.message + '</span>';
             }
         }
 
@@ -397,10 +404,41 @@ export default async function handler(req, res) {
                 if (data.success) {
                     result.innerHTML = '<span class="text-green-600">✓ Database connected</span>';
                 } else {
-                    result.innerHTML = \`<span class="text-orange-600">⚠ Database not configured</span>\`;
+                    result.innerHTML = '<span class="text-orange-600">⚠ Database not configured</span>';
                 }
             } catch (error) {
-                result.innerHTML = \`<span class="text-red-600">✗ Error: \${error.message}</span>\`;
+                result.innerHTML = '<span class="text-red-600">✗ Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Add test quote generation function
+        async function testQuoteGeneration() {
+            try {
+                const response = await fetch('/api/generate-quote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        service: 'VR Experience Development',
+                        amount: 500,
+                        description: 'Custom VR training solution',
+                        customer: {
+                            name: 'Test Customer',
+                            email: 'test@cosstech.com',
+                            phone: '95000000'
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Quote Generated Successfully!\\nQuote ID: ' + result.quote.id + '\\nAmount: ' + result.quote.amount + ' ' + result.quote.currency + '\\nPayment URL: ' + result.payment_url);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error generating quote: ' + error.message);
             }
         }
     </script>
