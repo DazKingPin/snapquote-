@@ -11,7 +11,7 @@ async function sendWelcomeEmail(businessData) {
   
   try {
     const emailPayload = {
-      from: 'SnapQuote <noreply@snapquote.ai>',
+      from: 'SnapQuote <onboarding@resend.dev>',
       to: [businessData.email],
       subject: `Welcome to SnapQuote! Your ${businessData.planName} account is ready`,
       html: `
