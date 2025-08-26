@@ -1491,14 +1491,14 @@ export default async function handler(req, res) {
         'const subtotal = laborCost + materials;' +
         'const vat = subtotal * 0.05;' +
         'const total = subtotal + vat;' +
-        'document.getElementById("quote-preview").innerHTML = ' +
-        '"<div class=\"bg-gray-50 rounded-lg p-4\">" +' +
-        '"<div class=\"flex justify-between mb-2\"><span>Labor (" + hours + " hrs × " + hourlyRate + " OMR):</span><span class=\"font-medium\">" + laborCost.toFixed(2) + " OMR</span></div>" +' +
-        '"<div class=\"flex justify-between mb-2\"><span>Materials:</span><span class=\"font-medium\">" + materials.toFixed(2) + " OMR</span></div>" +' +
-        '"<div class=\"flex justify-between mb-2\"><span>VAT (5%):</span><span class=\"font-medium\">" + vat.toFixed(2) + " OMR</span></div>" +' +
-        '"<hr class=\"my-2\">" +' +
-        '"<div class=\"flex justify-between text-lg font-bold text-green-600\"><span>Total:</span><span>" + total.toFixed(2) + " OMR</span></div>" +' +
-        '"</div>";' +
+        'var html = "<div class=\\"bg-gray-50 rounded-lg p-4\\">";' +
+        'html += "<div class=\\"flex justify-between mb-2\\"><span>Labor (" + hours + " hrs × " + hourlyRate + " OMR):</span><span class=\\"font-medium\\">" + laborCost.toFixed(2) + " OMR</span></div>";' +
+        'html += "<div class=\\"flex justify-between mb-2\\"><span>Materials:</span><span class=\\"font-medium\\">" + materials.toFixed(2) + " OMR</span></div>";' +
+        'html += "<div class=\\"flex justify-between mb-2\\"><span>VAT (5%):</span><span class=\\"font-medium\\">" + vat.toFixed(2) + " OMR</span></div>";' +
+        'html += "<hr class=\\"my-2\\">";' +
+        'html += "<div class=\\"flex justify-between text-lg font-bold text-green-600\\"><span>Total:</span><span>" + total.toFixed(2) + " OMR</span></div>";' +
+        'html += "</div>";' +
+        'document.getElementById("quote-preview").innerHTML = html;' +
         'currentQuote = {customer: {name: name, phone: phone}, service: service, description: description, total: total, id: "Q-" + Date.now()};' +
         'document.getElementById("whatsapp-btn").disabled = false;' +
         'document.getElementById("email-btn").disabled = false;' +
