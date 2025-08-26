@@ -1,5 +1,68 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Email service for notifications (using Resend - free tier)
+async function sendWelcomeEmail(businessData) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (!resendApiKey) {
+    console.log('No Resend API key found, email notification skipped');
+    return { success: false, message: 'Email service not configured' };
+  }
+  
+  try {
+    const emailPayload = {
+      from: 'SnapQuote <noreply@snapquote.ai>',
+      to: [businessData.email],
+      subject: `Welcome to SnapQuote! Your ${businessData.planName} account is ready`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #667eea; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 28px;">🚀 Welcome to SnapQuote!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 18px;">Your AI-Powered Quote Generation Platform</p>
+            </div>
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                <h2 style="color: #667eea; margin-top: 0;">Hi ${businessData.businessName}! 👋</h2>
+                <p>Congratulations! Your <strong>${businessData.planName}</strong> account has been successfully created.</p>
+                <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
+                    <h3 style="margin-top: 0; color: #667eea;">📋 Your Account Details</h3>
+                    <p><strong>Business:</strong> ${businessData.businessName}</p>
+                    <p><strong>Email:</strong> ${businessData.email}</p>
+                    <p><strong>Plan:</strong> ${businessData.planName}</p>
+                    <p><strong>Business ID:</strong> ${businessData.businessId}</p>
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://snapquote-six.vercel.app/dashboard?business=${businessData.businessId}" 
+                       style="display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">Access Your Dashboard</a>
+                </div>
+                <p style="color: #666; text-align: center;">Need help? Visit our support center.</p>
+            </div>
+        </div>
+      `
+    };
+    
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailPayload)
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      return { success: true, emailId: result.id, message: 'Welcome email sent successfully' };
+    } else {
+      console.error('Failed to send email:', result);
+      return { success: false, message: result.message || 'Failed to send email' };
+    }
+  } catch (error) {
+    console.error('Email service error:', error);
+    return { success: false, message: 'Email service error' };
+  }
+}
+
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -293,11 +356,23 @@ export default async function handler(req, res) {
           }
         }
 
+        // Send welcome email
+        const emailData = {
+          businessName: business.business_name,
+          email: business.email,
+          planName: business.plan || 'Trial',
+          businessId: businessId
+        };
+        
+        const emailResult = await sendWelcomeEmail(emailData);
+        console.log('Welcome email result:', emailResult);
+
         return sendResponse(200, {
           success: true,
           business_id: businessId,
           message: 'Business account created successfully',
           trial_ends: business.trial_ends,
+          email_sent: emailResult.success,
           next_steps: [
             'Check your email for welcome instructions',
             'Set up your WhatsApp Business API',
@@ -723,19 +798,23 @@ export default async function handler(req, res) {
         }
 
         function generateTestQuote() {
-            window.open('/', '_blank');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = '/create-quote?business=' + businessId;
         }
 
         function setupWhatsApp() {
-            alert('🚀 WhatsApp Business API Integration\\n\\nComing Soon!\\n\\nThis will connect your WhatsApp Business number to SnapQuote for automated quote generation.\\n\\nFor now, you can generate quotes manually and share payment links via WhatsApp.');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = '/whatsapp-setup?business=' + businessId;
         }
 
         function configurePricing() {
-            alert('⚙️ Pricing Configuration\\n\\nConfigure your:\\n• Hourly rates by service type\\n• Material markup percentages\\n• Complexity multipliers\\n• Minimum quote amounts\\n\\nComing in next update!');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = '/pricing-config?business=' + businessId;
         }
 
         function viewAnalytics() {
-            alert('📊 Advanced Analytics\\n\\nView detailed insights:\\n• Quote conversion funnel\\n• Peak request times\\n• Popular services\\n• Revenue trends\\n• Customer analytics\\n\\nComing soon!');
+            const businessId = new URLSearchParams(window.location.search).get('business');
+            window.location.href = '/analytics?business=' + businessId;
         }
 
         function updateProfile() {
@@ -1314,6 +1393,231 @@ export default async function handler(req, res) {
       return sendResponse(200, html, 'text/html');
     }
 
+    // Create Quote page
+    if (path === '/create-quote') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const createQuoteHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quote - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Create New Quote</h1>
+                    <p class="text-gray-600">Generate AI-powered quotes for your customers</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="text-center py-12">
+                <i class="fas fa-magic text-6xl text-purple-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quote Generation Form</h2>
+                <p class="text-gray-600 mb-6">Complete quote generation interface coming in next update!</p>
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-500">Features to include:</p>
+                    <ul class="text-left max-w-md mx-auto text-sm text-gray-600">
+                        <li>• Customer information form</li>
+                        <li>• Service type selection</li>
+                        <li>• AI image analysis upload</li>
+                        <li>• Real-time quote calculation</li>
+                        <li>• WhatsApp message composer</li>
+                    </ul>
+                </div>
+                <button onclick="alert('Quote generation interface coming soon!')" class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-magic mr-2"></i>Generate Quote (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+      
+      return sendResponse(200, createQuoteHtml, 'text/html');
+    }
+
+    // WhatsApp Setup page
+    if (path === '/whatsapp-setup') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const whatsappSetupHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Setup - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                        WhatsApp Business API Setup
+                    </h1>
+                    <p class="text-gray-600">Connect your WhatsApp Business number for automated quote delivery</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="text-center py-12">
+                <i class="fab fa-whatsapp text-6xl text-green-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">WhatsApp Business Integration</h2>
+                <p class="text-gray-600 mb-6">Complete WhatsApp Business API setup coming in Phase 2!</p>
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-500">Features to include:</p>
+                    <ul class="text-left max-w-md mx-auto text-sm text-gray-600">
+                        <li>• QR code pairing with WhatsApp Business</li>
+                        <li>• Automated quote message templates</li>
+                        <li>• Customer response handling</li>
+                        <li>• Message delivery status tracking</li>
+                        <li>• Webhook integration setup</li>
+                    </ul>
+                </div>
+                <button onclick="alert('WhatsApp integration coming in Phase 2!')" class="mt-6 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+                    <i class="fab fa-whatsapp mr-2"></i>Connect WhatsApp (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+      
+      return sendResponse(200, whatsappSetupHtml, 'text/html');
+    }
+
+    // Pricing Configuration page
+    if (path === '/pricing-config') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const pricingConfigHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Configuration - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-cogs text-purple-500 mr-2"></i>
+                        Pricing Configuration
+                    </h1>
+                    <p class="text-gray-600">Set up your service rates, material markups, and pricing rules</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="text-center py-12">
+                <i class="fas fa-cogs text-6xl text-purple-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Pricing Rules Configuration</h2>
+                <p class="text-gray-600 mb-6">Advanced pricing configuration interface coming soon!</p>
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-500">Features to include:</p>
+                    <ul class="text-left max-w-md mx-auto text-sm text-gray-600">
+                        <li>• Service-specific hourly rates</li>
+                        <li>• Material markup percentages</li>
+                        <li>• Complexity multipliers</li>
+                        <li>• Minimum quote amounts</li>
+                        <li>• Tax and fee configuration</li>
+                    </ul>
+                </div>
+                <button onclick="alert('Pricing configuration interface coming soon!')" class="mt-6 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-cogs mr-2"></i>Configure Pricing (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+      
+      return sendResponse(200, pricingConfigHtml, 'text/html');
+    }
+
+    // Advanced Analytics page
+    if (path === '/analytics') {
+      const businessId = url.searchParams.get('business') || 'demo_business_123';
+      const analyticsHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Analytics - SnapQuote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-chart-line text-orange-500 mr-2"></i>
+                        Advanced Analytics
+                    </h1>
+                    <p class="text-gray-600">Detailed insights into your quote performance and business metrics</p>
+                </div>
+                <a href="/dashboard?business=${businessId}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="text-center py-12">
+                <i class="fas fa-chart-line text-6xl text-orange-500 mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Business Analytics Dashboard</h2>
+                <p class="text-gray-600 mb-6">Comprehensive analytics dashboard with charts and insights coming soon!</p>
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-500">Features to include:</p>
+                    <ul class="text-left max-w-md mx-auto text-sm text-gray-600">
+                        <li>• Quote conversion funnel analysis</li>
+                        <li>• Revenue trends and forecasting</li>
+                        <li>• Peak request time analytics</li>
+                        <li>• Popular services breakdown</li>
+                        <li>• Customer behavior insights</li>
+                    </ul>
+                </div>
+                <button onclick="alert('Advanced analytics coming soon!')" class="mt-6 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700">
+                    <i class="fas fa-chart-line mr-2"></i>View Analytics (Demo)
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+      
+      return sendResponse(200, analyticsHtml, 'text/html');
+    }
+
     // 404 for unknown routes
     return sendResponse(404, {
       error: 'Not Found',
@@ -1323,7 +1627,12 @@ export default async function handler(req, res) {
         '/api/db-test',
         '/api/generate-quote',
         '/api/webhook/whatsapp',
-        '/api/analytics'
+        '/api/analytics',
+        '/dashboard',
+        '/create-quote',
+        '/whatsapp-setup',
+        '/pricing-config',
+        '/analytics'
       ],
       timestamp: new Date().toISOString()
     });
