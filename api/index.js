@@ -11,7 +11,7 @@ async function sendWelcomeEmail(businessData) {
   
   try {
     const emailPayload = {
-      from: 'Smartthinkerz <noreply@smartthinkerz.com>',
+      from: 'Smartthinkerz <onboarding@resend.dev>',
       to: [businessData.email],
       subject: `Welcome to Smartthinkerz! Your ${businessData.planName} account is ready`,
       html: `
