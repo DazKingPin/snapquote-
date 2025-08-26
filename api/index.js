@@ -65,17 +65,27 @@ export default async function handler(req, res) {
 
     // Test database connection
     if (path === '/api/db-test' && supabase) {
-      const { data, error } = await supabase
-        .from('merchants')
-        .select('count(*)')
-        .limit(1);
-      
-      return sendResponse(200, {
-        message: 'Database connection test',
-        success: !error,
-        error: error?.message || null,
-        timestamp: new Date().toISOString()
-      });
+      try {
+        const { data, error } = await supabase
+          .from('merchants')
+          .select('id')
+          .limit(1);
+        
+        return sendResponse(200, {
+          message: 'Database connection test',
+          success: !error,
+          data: data ? `Found ${data.length} records` : 'No data',
+          error: error?.message || null,
+          timestamp: new Date().toISOString()
+        });
+      } catch (dbError) {
+        return sendResponse(200, {
+          message: 'Database connection test',
+          success: false,
+          error: `Connection error: ${dbError.message}`,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
     // Quote generation endpoint (placeholder)
