@@ -436,6 +436,87 @@ export default async function handler(req, res) {
             </div>
         </div>
 
+        <!-- Quote Generator Form -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4">
+                <i class="fas fa-calculator text-blue-600 mr-2"></i>
+                Generate Custom Quote
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Quote Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+                        <select id="service-type" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <option value="VR Experience Development">VR Experience Development</option>
+                            <option value="AR Application">AR Application</option>
+                            <option value="Website Design">Website Design</option>
+                            <option value="Digital Transformation">Digital Transformation</option>
+                            <option value="AI Integration">AI Integration</option>
+                            <option value="Custom Software">Custom Software</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Amount (OMR)</label>
+                        <input type="number" id="project-amount" value="500" min="50" max="50000" 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Description</label>
+                        <textarea id="project-description" rows="3" placeholder="Describe your project requirements..."
+                                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">Custom business solution with AI integration</textarea>
+                    </div>
+                </div>
+                
+                <!-- Customer Info -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                        <input type="text" id="customer-name" value="Ahmed Al-Rashid" 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" id="customer-email" value="ahmed@cosstech.com" 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="customer-phone" value="95123456" placeholder="95XXXXXX" 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    
+                    <button onclick="generateCustomQuote()" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
+                        <i class="fas fa-magic mr-2"></i>
+                        Generate Quote & Payment Link
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Result Display -->
+            <div id="quote-result" class="mt-6 hidden">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-800 mb-2">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Quote Generated Successfully!
+                    </h3>
+                    <div id="quote-details" class="text-sm text-green-700"></div>
+                    <div class="mt-3">
+                        <button id="open-payment" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
+                            Open Payment Page
+                        </button>
+                        <button onclick="copyPaymentLink()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Copy Payment Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- API Status -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
             <h2 class="text-2xl font-semibold mb-4">API Status</h2>
@@ -455,11 +536,11 @@ export default async function handler(req, res) {
                     <div id="db-result" class="mt-2 text-sm"></div>
                 </div>
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <h3 class="font-medium text-gray-800 mb-2">Quote Generation</h3>
+                    <h3 class="font-medium text-gray-800 mb-2">Quick Test</h3>
                     <button onclick="testQuoteGeneration()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
                         Generate Test Quote
                     </button>
-                    <div class="mt-2 text-xs text-gray-500">Test Tap Payments integration</div>
+                    <div class="mt-2 text-xs text-gray-500">Quick API test</div>
                 </div>
             </div>
         </div>
@@ -522,6 +603,74 @@ export default async function handler(req, res) {
                 }
             } catch (error) {
                 result.innerHTML = '<span class="text-red-600">✗ Error: ' + error.message + '</span>';
+            }
+        }
+
+        // Generate custom quote from form
+        let currentPaymentUrl = '';
+        
+        async function generateCustomQuote() {
+            const serviceType = document.getElementById('service-type').value;
+            const amount = parseInt(document.getElementById('project-amount').value);
+            const description = document.getElementById('project-description').value;
+            const customerName = document.getElementById('customer-name').value;
+            const customerEmail = document.getElementById('customer-email').value;
+            const customerPhone = document.getElementById('customer-phone').value;
+            
+            if (!customerName || !customerEmail || !customerPhone || !amount) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/generate-quote', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        service: serviceType,
+                        amount: amount,
+                        description: description,
+                        customer: {
+                            name: customerName,
+                            email: customerEmail,
+                            phone: customerPhone
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    currentPaymentUrl = result.payment_url;
+                    
+                    document.getElementById('quote-details').innerHTML = 
+                        '<strong>Quote ID:</strong> ' + result.quote.id + '<br>' +
+                        '<strong>Service:</strong> ' + result.quote.service + '<br>' +
+                        '<strong>Amount:</strong> ' + result.quote.amount + ' ' + result.quote.currency + '<br>' +
+                        '<strong>Customer:</strong> ' + result.quote.customer.name + '<br>' +
+                        '<strong>Status:</strong> Ready for payment';
+                    
+                    document.getElementById('quote-result').classList.remove('hidden');
+                    document.getElementById('open-payment').onclick = function() {
+                        window.open(currentPaymentUrl, '_blank');
+                    };
+                    
+                    // Scroll to result
+                    document.getElementById('quote-result').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('Error generating quote: ' + error.message);
+            }
+        }
+        
+        function copyPaymentLink() {
+            if (currentPaymentUrl) {
+                navigator.clipboard.writeText(currentPaymentUrl).then(function() {
+                    alert('Payment link copied to clipboard!');
+                });
             }
         }
 
