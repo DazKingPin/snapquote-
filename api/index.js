@@ -153,8 +153,18 @@ export default async function handler(req, res) {
     // Quote generation endpoint with Tap Payments
     if (path === '/api/generate-quote' && req.method === 'POST') {
       try {
-        const body = await req.text();
-        const data = JSON.parse(body || '{}');
+        // Handle different request body formats (Vercel vs Node.js)
+        let data = {};
+        if (req.body) {
+          data = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } else if (req.read) {
+          const body = await new Promise((resolve) => {
+            let chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+          });
+          data = JSON.parse(body || '{}');
+        }
         
         // Basic quote generation (will expand with OpenAI)
         const quote = {
@@ -191,8 +201,18 @@ export default async function handler(req, res) {
     // Tap Payments webhook endpoint
     if (path === '/api/webhook/tap' && req.method === 'POST') {
       try {
-        const body = await req.text();
-        const tapData = JSON.parse(body || '{}');
+        // Handle different request body formats (Vercel vs Node.js)
+        let tapData = {};
+        if (req.body) {
+          tapData = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        } else if (req.read) {
+          const body = await new Promise((resolve) => {
+            let chunks = [];
+            req.on('data', chunk => chunks.push(chunk));
+            req.on('end', () => resolve(Buffer.concat(chunks).toString()));
+          });
+          tapData = JSON.parse(body || '{}');
+        }
         
         // Process Tap payment webhook
         console.log('Tap Payment Webhook:', tapData);
